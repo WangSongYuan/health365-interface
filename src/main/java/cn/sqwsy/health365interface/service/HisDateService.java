@@ -130,6 +130,11 @@ public class HisDateService {
 	    		
 	    		//住院信息赋值
 	    		setInhospital(rs, orgId, status, inhospitalDepartment, s, doctor);
+	    		/**
+	    		 * 任务分配
+	    		 */
+	    		SUserEntity randDiseaseManager = userMapper.getOrderDiseaseManager(inhospitalDepartment.getId());
+	    		s.setInDiseaseManagerId(randDiseaseManager.getId());
 	    		inhospitalMapper.setInhospital(s);
 	    		if(status==1){
 	    			//插入住院板块完成度表
@@ -213,11 +218,6 @@ public class HisDateService {
 			//出院科室s.setOuthospitaldepartmentid();
 		}
 		s.setPatientHisId(rs.getString("PATIENTID_HIS"));
-		/**
-		 * 任务分配
-		 */
-		SUserEntity randDiseaseManager = userMapper.getOrderDiseaseManager(inhospitalDepartment.getId());
-		s.setInDiseaseManagerId(randDiseaseManager.getId());
 	}
 
 	private SUserEntity setDoctor(ResultSet rs,SDepartmentEntity inhospitalDepartment, SOrgEntity org)

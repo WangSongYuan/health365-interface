@@ -44,7 +44,6 @@ public class ZhangQiuHisHandler extends HisDateService{
 				String sql = "SELECT * FROM V_GETOUTHOSPITALLIST WHERE INHOSPITALSTATUS = 1 AND MAINDOCTORID IS NOT NULL";
 		        pstmt = conn.prepareStatement(sql);
 		        rs = pstmt.executeQuery();
-		        System.out.println(rs.getRow());
 		        while(rs.next()){
 		        	Map<String,Object> para = new HashMap<>();
 		        	//章丘数据唯一标识
