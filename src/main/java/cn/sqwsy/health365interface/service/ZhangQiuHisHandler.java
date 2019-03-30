@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
+//import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import cn.sqwsy.health365interface.dao.entity.Nurse;
@@ -29,7 +29,7 @@ public class ZhangQiuHisHandler extends HisDateService{
 		@Autowired
 		private NurseMapper nurseMapper;
 	
-		@Scheduled(fixedDelay = 3000)
+		//@Scheduled(fixedDelay = 3000)
 		public void fixedRateJob() {
 			Connection conn = getConn();
 			PreparedStatement pstmt=null;
@@ -50,7 +50,7 @@ public class ZhangQiuHisHandler extends HisDateService{
 		        	if(ValidateUtil.isNotNull(rs.getString("PATIENTID_HIS"))&&ValidateUtil.isNotNull(rs.getString("inhospitalcount"))){
 		        		para.put("patientHisId", rs.getString("PATIENTID_HIS"));
 		        		para.put("inhospitalcount", rs.getString("inhospitalcount"));
-		        		startGrabData(rs, para, 1,1);
+		        		startGrabDataByResultSet(rs, para, 1,1);
 		        	}
 		        }
 		        pstmt.close();
@@ -86,7 +86,7 @@ public class ZhangQiuHisHandler extends HisDateService{
 		        pstmt = conn.prepareStatement(sql);
 		        rs = pstmt.executeQuery();
 		        while(rs.next()){
-		        	setDepartmentByResultSet(rs,1,1);
+		        	setDepartment(rs.getString("INHOSPITALDEPARTMENTID"), rs.getString("INHOSPITALDEPARTMENT"), 1);
 		        }
 		        pstmt.close();
 		    } catch (SQLException e) {

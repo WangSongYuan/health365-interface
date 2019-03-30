@@ -18,6 +18,9 @@ public class InhospitalSqlFactory {
         if(!para.get("inhospitalcount").equals("")){
         	sql.WHERE("inhospitalcount="+para.get("inhospitalcount"));
         }
+        if(!para.get("visitnum").equals("")){
+        	sql.WHERE("visitnum="+para.get("visitnum"));
+        }
         return sql.toString();
 	}
 	

@@ -138,7 +138,9 @@ public class SInhospitalEntity extends PO {
 	private Integer isValid=0;//是否有效 (1是有效0是无效)
 	
 	private String errorMsg;//错误原因
-
+	
+	private String outhospitaldiagnoseicd;//出院诊断ICD
+	
 	public java.lang.Integer getId() {
 		return id;
 	}
@@ -601,5 +603,13 @@ public class SInhospitalEntity extends PO {
 
 	public void setErrorMsg(String errorMsg) {
 		this.errorMsg = errorMsg;
+	}
+
+	public String getOuthospitaldiagnoseicd() {
+		return outhospitaldiagnoseicd;
+	}
+
+	public void setOuthospitaldiagnoseicd(String outhospitaldiagnoseicd) {
+		this.outhospitaldiagnoseicd = outhospitaldiagnoseicd;
 	}
 }

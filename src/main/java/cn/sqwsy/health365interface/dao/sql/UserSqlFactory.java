@@ -19,7 +19,7 @@ public class UserSqlFactory {
         	sql.WHERE("id="+para.get("id"));
         }
         if(para.get("jobnum")!=null){
-        	sql.WHERE("jobnum="+para.get("jobnum"));
+        	sql.WHERE("jobnum='"+para.get("jobnum")+"'");
         }
         return sql.toString();
 	}
