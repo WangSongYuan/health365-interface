@@ -3,6 +3,7 @@ package cn.sqwsy.health365interface.service;
 import java.io.StringReader;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -87,11 +88,10 @@ public class SanYaHisHandler extends HisDateService {
 
 	@SuppressWarnings("unchecked")
 	private void toXml(Object object, Integer status) throws DocumentException, SQLException {
-		String data = object.toString().substring(1);
 		SAXReader reader = new SAXReader();
 		Document document = null;
 		try {
-			document = reader.read(new StringReader(data.toString()), "ANSI");
+			document = reader.read(new StringReader(object.toString()), "ANSI");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -108,7 +108,7 @@ public class SanYaHisHandler extends HisDateService {
 				}
 			}
 		}else{
-			System.out.println("没有数据");
+			//System.out.println("没有数据");
 		}
 	}
 
@@ -187,9 +187,19 @@ public class SanYaHisHandler extends HisDateService {
 		map.put(306, "疼痛脊柱微创中心");
 		map.put(307, "医疗保健科");
 		map.put(338, "急诊重症监护室");
+		
+		//默认管理科室第三方科室ID
+		List<String> departmentDefaultStateList = new ArrayList<>();
+		departmentDefaultStateList.add("94");
+		departmentDefaultStateList.add("114");
+		departmentDefaultStateList.add("49");
+		departmentDefaultStateList.add("185");
+		departmentDefaultStateList.add("139");
+		departmentDefaultStateList.add("147");
+		
 		for (Object key : map.keySet()) {
 			try {
-				setDepartment(key.toString(), map.get(key), 1);
+				setDepartment(key.toString(), map.get(key), 1,departmentDefaultStateList);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}

@@ -52,7 +52,8 @@ public class DepartmentSqlFactory {
         if(department.getThirdpartyhisid() != null){ 
             sql.SET("thirdpartyhisid=#{thirdpartyhisid}");
         }
-        sql.SET("updatetime=now()");
+        //wangsongyuan 暂时先不设更新时间用于区分状态是否人为修改	20190420
+        //sql.SET("updatetime=now()");
         sql.WHERE("id = #{id}");
         return sql.toString();
 	}

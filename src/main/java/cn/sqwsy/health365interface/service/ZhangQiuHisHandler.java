@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,10 @@ public class ZhangQiuHisHandler extends HisDateService{
 		}
 		
 		public void setDepartments(Connection conn) {
+			//默认管理科室第三方科室ID
+			List<String> departmentDefaultStateList = new ArrayList<>();
+			departmentDefaultStateList.add("0602");
+			departmentDefaultStateList.add("0609");
 		    String sql = "SELECT DISTINCT INHOSPITALDEPARTMENT, INHOSPITALDEPARTMENTID FROM V_GETOUTHOSPITALLIST ORDER BY INHOSPITALDEPARTMENT";
 		    PreparedStatement pstmt=null;
 		    ResultSet rs=null;
@@ -86,7 +91,7 @@ public class ZhangQiuHisHandler extends HisDateService{
 		        pstmt = conn.prepareStatement(sql);
 		        rs = pstmt.executeQuery();
 		        while(rs.next()){
-		        	setDepartment(rs.getString("INHOSPITALDEPARTMENTID"), rs.getString("INHOSPITALDEPARTMENT"), 1);
+		        	setDepartment(rs.getString("INHOSPITALDEPARTMENTID"), rs.getString("INHOSPITALDEPARTMENT"), 1,departmentDefaultStateList);
 		        }
 		        pstmt.close();
 		    } catch (SQLException e) {
