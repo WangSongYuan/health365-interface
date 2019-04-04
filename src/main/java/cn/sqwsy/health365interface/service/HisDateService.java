@@ -123,7 +123,7 @@ public class HisDateService {
     		}
     		
     		//住院信息赋值
-    		setInhospitalDateByElement(element,orgId,status,department,s,doctor,nurse);
+    		setInhospitalDateByElement(element,orgId,status,department,s,doctor,nurse,1);
     		/**
     		 * 任务分配
     		 */
@@ -150,7 +150,7 @@ public class HisDateService {
     			s.setsPatientEntity(patient);
     		}
     		//住院信息赋值
-    		setInhospitalDateByElement(element,orgId,status,department,s,doctor,nurse);
+    		setInhospitalDateByElement(element,orgId,status,department,s,doctor,nurse,2);
     		inhospitalMapper.updateInhospital(s);
     	}
 	}
@@ -204,7 +204,7 @@ public class HisDateService {
     			s.setsPatientEntity(patient);
     		}
     		//住院信息赋值
-    		setInhospitalDateByResultSet(rs, orgId, status, department, s,doctor,nurse);
+    		setInhospitalDateByResultSet(rs, orgId, status, department, s,doctor,nurse,1);
     		/**
     		 * 任务分配
     		 */
@@ -230,7 +230,7 @@ public class HisDateService {
     			s.setsPatientEntity(patient);
     		}
     		//住院信息赋值
-    		setInhospitalDateByResultSet(rs, orgId, status, department, s,doctor,nurse);
+    		setInhospitalDateByResultSet(rs, orgId, status, department, s,doctor,nurse,2);
     		inhospitalMapper.updateInhospital(s);
     	}
 	}
@@ -680,9 +680,12 @@ public class HisDateService {
 	 * @param status
 	 * @param inhospitalDepartment
 	 * @param s
+	 * @param doctor
+	 * @param nurse
+	 * @param methodType
 	 */
 	private void setInhospitalDateByElement(Element element, Integer orgId, Integer status,
-			SDepartmentEntity inhospitalDepartment, SInhospitalEntity s,SUserEntity doctor,SUserEntity nurse) {
+			SDepartmentEntity inhospitalDepartment, SInhospitalEntity s,SUserEntity doctor,SUserEntity nurse,Integer methodType) {
 		//插入住院信息表
 		s.setInhospitaldepartment(inhospitalDepartment.getName());
 		s.setInhospitaldepartmentid(inhospitalDepartment.getId());
@@ -737,9 +740,11 @@ public class HisDateService {
 		if(element.element("costtype")!=null){
 			s.setCosttype(element.element("costtype").getText());
 		}
-		s.setSchedulingstate(1);
 		if(element.element("inhospitaldays")!=null&&!element.element("inhospitaldays").getText().equals("")){
 			s.setInhospitaldays(Integer.valueOf(element.element("inhospitaldays").getText()));
+		}
+		if(methodType==1){
+			s.setSchedulingstate(1);
 		}
 		
 		/**
@@ -769,7 +774,9 @@ public class HisDateService {
 			s.setManagestate(2);
 		}else{
 			//院中管理状态(应设为 0未标记暂设为1未完成)
-			s.setManagestate(1);
+			if(methodType==1){
+				s.setManagestate(1);
+			}
 		}
 		if(element.element("patientid_his")!=null){
 			s.setPatientHisId(element.element("patientid_his").getText());
@@ -787,7 +794,7 @@ public class HisDateService {
 	 * @throws SQLException
 	 */
 	private void setInhospitalDateByResultSet(ResultSet rs, Integer orgId, Integer status, SDepartmentEntity inhospitalDepartment,
-			SInhospitalEntity s,SUserEntity doctor,SUserEntity nurse) throws SQLException {
+			SInhospitalEntity s,SUserEntity doctor,SUserEntity nurse,Integer methodType) throws SQLException {
 		//插入住院信息表
 		s.setInhospitaldepartment(inhospitalDepartment.getName());
 		s.setInhospitaldepartmentid(inhospitalDepartment.getId());
