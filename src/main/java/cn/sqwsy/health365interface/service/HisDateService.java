@@ -79,10 +79,6 @@ public class HisDateService {
 	@Autowired
 	public ProgrammeMapper programmeMapper;
 	
-	public void sysHisByDateBase(){
-		
-	}
-	
 	public void startGrabDataByElement(Element element,Map<String,Object> para,Integer orgId,Integer status) throws SQLException{
 		//机构
 		Map<String,Object> orgPara = new HashMap<>();
@@ -90,30 +86,37 @@ public class HisDateService {
 		SOrgEntity org = orgMapper.getOrg(orgPara);
 		SInhospitalEntity s = inhospitalMapper.getInhospital(para);
 		//插入入院and出院科室表
-		SDepartmentEntity department = null;
+		SDepartmentEntity inHospitalDepartment = null;
+		SDepartmentEntity outHospitalDepartment = null;
 		if(status==1){
 			//入院科室表
-			department = setDepartment(element.element("inhospitaldepartmentid").getText(),element.element("inhospitaldepartment").getText(),orgId,null);
+			inHospitalDepartment = setDepartment(element.element("inhospitaldepartmentid").getText(),element.element("inhospitaldepartment").getText(),orgId,null);
+			//无需管理
+			if(inHospitalDepartment.getState()==2){
+				return;
+			}
 		}else if(status==2){
 			//出院科室表
-			department = setDepartment(element.element("outhospitaldepartmentid").getText(),element.element("outhospitaldepartment").getText(),orgId,null);
-		}
-		//无需管理
-		if(department.getState()==2){
-			return;
+			outHospitalDepartment = setDepartment(element.element("outhospitaldepartmentid").getText(),element.element("outhospitaldepartment").getText(),orgId,null);
+			if(outHospitalDepartment.getState()==2){
+				return;
+			}
+			//入院科室表
+			inHospitalDepartment = setDepartment(element.element("inhospitaldepartmentid").getText(),element.element("inhospitaldepartment").getText(),orgId,null);
 		}
 		SUserEntity doctor = null;
 		SUserEntity nurse = null;
     	if(s==null){
     		s = new SInhospitalEntity();
     		validDataByElement(element, s);
-    		//插入医生用户表
-    		if(element.element("maindoctorname") != null&&ValidateUtil.isNotNull(element.element("maindoctorname").getText())&&element.element("maindoctorid") != null&&ValidateUtil.isNotNull(element.element("maindoctorid").getText())){
-    			doctor = setUser(element.element("maindoctorname").getText(),element.element("maindoctorid").getText(),department,org,4);
-    		}
-    		if(element.element("nurseno") != null&&ValidateUtil.isNotNull(element.element("nurseno").getText())&&element.element("nursename") != null&&ValidateUtil.isNotNull(element.element("nursename").getText())){
-    			//插入护士相关
-    			nurse = setUser(element.element("nursename").getText(),element.element("nurseno").getText(),department, org, 5);
+    		if(status==1&&inHospitalDepartment!=null){
+    			//插入医生相关表
+    			doctor = setDoctorByElement(element, org, inHospitalDepartment, doctor);
+    			//插入护士相关表
+    			nurse = setNurseByElement(element, org, inHospitalDepartment, nurse);
+    		}else if(status==2&&outHospitalDepartment!=null){
+    			doctor = setDoctorByElement(element, org, outHospitalDepartment, doctor);
+    			nurse = setNurseByElement(element, org, outHospitalDepartment, nurse);
     		}
     		
     		//验证通过的情况下插入患者表
@@ -122,27 +125,28 @@ public class HisDateService {
     			s.setsPatientEntity(patient);
     		}
     		
-    		//住院信息赋值
-    		setInhospitalDateByElement(element,orgId,status,department,s,doctor,nurse,1);
-    		/**
-    		 * 任务分配
-    		 */
-    		SUserEntity randDiseaseManager = userMapper.getOrderDiseaseManager(department.getId());
-    		s.setInDiseaseManagerId(randDiseaseManager.getId());
+			//住院信息赋值
+			setInhospitalDateByElement(element,orgId,status,inHospitalDepartment,outHospitalDepartment,s,doctor,nurse,1);
+			if(status==1){
+				/**
+				 * 任务分配
+				 */
+				SUserEntity randDiseaseManager = userMapper.getOrderDiseaseManager(inHospitalDepartment.getId());
+				s.setInDiseaseManagerId(randDiseaseManager.getId());
+			}
     		inhospitalMapper.setInhospital(s);
     		if(status==1){
     			//插入住院板块完成度表
-    			setInhosipitalplate(s,department.getId());
+    			setInhosipitalplate(s,inHospitalDepartment.getId());
     		}
     	}else{
     		validDataByElement(element, s);
-    		//插入医生用户表
-    		if(element.element("maindoctorname") != null&&ValidateUtil.isNotNull(element.element("maindoctorname").getText())&&element.element("maindoctorid") != null&&ValidateUtil.isNotNull(element.element("maindoctorid").getText())){
-    			doctor = setUser(element.element("maindoctorname").getText(),element.element("maindoctorid").getText(),department,org,4);
-    		}
-    		if(element.element("nurseno") != null&&ValidateUtil.isNotNull(element.element("nurseno").getText())&&element.element("nursename") != null&&ValidateUtil.isNotNull(element.element("nursename").getText())){
-    			//插入护士相关
-    			nurse  = setUser(element.element("nursename").getText(),element.element("nurseno").getText(),department, org, 5);
+    		if(status==1){
+    			doctor = setDoctorByElement(element, org, inHospitalDepartment, doctor);
+    			nurse = setNurseByElement(element, org, inHospitalDepartment, nurse);
+    		}else if(status==2){
+    			doctor = setDoctorByElement(element, org, outHospitalDepartment, doctor);
+    			nurse = setNurseByElement(element, org, outHospitalDepartment, nurse);
     		}
     		//验证通过的情况下插入患者表
     		if(s.getIsValid()==1){
@@ -150,17 +154,11 @@ public class HisDateService {
     			s.setsPatientEntity(patient);
     		}
     		//住院信息赋值
-    		setInhospitalDateByElement(element,orgId,status,department,s,doctor,nurse,2);
+			setInhospitalDateByElement(element,orgId,status,inHospitalDepartment,outHospitalDepartment,s,doctor,nurse,2);
     		inhospitalMapper.updateInhospital(s);
     	}
 	}
-	
-	public void sysHisByJson(List<Element> list){
-		for (int i = 0; i < list.size(); i++) {
-			
-		}
-	}
-	
+
 	/**
 	 * 开始抓取数据(ResultSet)
 	 * @param rs
@@ -173,30 +171,40 @@ public class HisDateService {
 		SOrgEntity org = orgMapper.getOrg(orgPara);
 		SInhospitalEntity s = inhospitalMapper.getInhospital(para);
 		//插入入院and出院科室表
-		SDepartmentEntity department = null;
+		SDepartmentEntity inHospitalDepartment = null;
+		SDepartmentEntity outHospitalDepartment = null;
 		if(status==1){
 			//入院科室表
-			department = setDepartment(rs.getString("inhospitaldepartmentid"),rs.getString("inhospitaldepartment"),orgId,null);
+			inHospitalDepartment = setDepartment(rs.getString("inhospitaldepartmentid"),rs.getString("inhospitaldepartment"),orgId,null);
+			//无需管理
+			if(inHospitalDepartment.getState()==2){
+				return;
+			}
 		}else if(status==2){
 			//出院科室表
-			department = setDepartment(rs.getString("outhospitaldepartmentid"),rs.getString("outhospitaldepartment"),orgId,null);
-		}
-		//无需管理
-		if(department.getState()==2){
-			return;
+			outHospitalDepartment = setDepartment(rs.getString("outhospitaldepartmentid"),rs.getString("outhospitaldepartment"),orgId,null);
+			//无需管理
+			if(outHospitalDepartment.getState()==2){
+				return;
+			}
+			//入院科室表
+			inHospitalDepartment = setDepartment(rs.getString("inhospitaldepartmentid"),rs.getString("inhospitaldepartment"),orgId,null);
 		}
 		SUserEntity doctor = null;
 		SUserEntity nurse = null;
     	if(s==null){
     		s = new SInhospitalEntity();
     		validDataByResultSet(rs, s);
-    		//插入医生相关表
-    		if(ValidateUtil.isNotNull(rs.getString("maindoctorid"))&&ValidateUtil.isNotNull(rs.getString("maindoctorname"))){
-    			doctor = setUser(rs.getString("maindoctorname"),rs.getString("maindoctorid"),department,org,4);
-    		}
-    		//插入护士相关
-    		if(ValidateUtil.isNotNull(rs.getString("nursename"))&&!ValidateUtil.isNotNull(rs.getString("nurseno"))){
-    			nurse = setUser(rs.getString("nursename"), rs.getString("nurseno"), department, org, 5);
+    		if(status==1){
+    			//插入医生相关表
+    			doctor = setDoctorByResultSet(rs, org, inHospitalDepartment, doctor);
+    			//插入护士相关
+    			nurse = setNurseByResultSet(rs, org, inHospitalDepartment, nurse);
+    		}else if(status==2){
+    			//插入医生相关表
+    			doctor = setDoctorByResultSet(rs, org, outHospitalDepartment, doctor);
+    			//插入护士相关
+    			nurse = setNurseByResultSet(rs, org, outHospitalDepartment, nurse);
     		}
     		//验证通过的情况下插入患者表
     		if(s.getIsValid()==1){
@@ -204,25 +212,31 @@ public class HisDateService {
     			s.setsPatientEntity(patient);
     		}
     		//住院信息赋值
-    		setInhospitalDateByResultSet(rs, orgId, status, department, s,doctor,nurse,1);
-    		/**
-    		 * 任务分配
-    		 */
-    		SUserEntity randDiseaseManager = userMapper.getOrderDiseaseManager(department.getId());
-    		s.setInDiseaseManagerId(randDiseaseManager.getId());
+    		setInhospitalDateByResultSet(rs, orgId, status, inHospitalDepartment,outHospitalDepartment, s,doctor,nurse,1);
+    		if(status==1){
+    			/**
+    			 * 任务分配
+    			 */
+    			SUserEntity randDiseaseManager = userMapper.getOrderDiseaseManager(inHospitalDepartment.getId());
+    			s.setInDiseaseManagerId(randDiseaseManager.getId());
+    		}
     		inhospitalMapper.setInhospital(s);
     		if(status==1){
     			//插入住院板块完成度表
-    			setInhosipitalplate(s,department.getId());
+    			setInhosipitalplate(s,inHospitalDepartment.getId());
     		}
     	}else{
     		validDataByResultSet(rs, s);
-    		//插入医生用户表
-    		if(ValidateUtil.isNotNull(rs.getString("maindoctorid"))&&!ValidateUtil.isNotNull(rs.getString("maindoctorname"))){
-    			doctor = setUser(rs.getString("maindoctorname"),rs.getString("maindoctorid"),department,org,4);
-    		}
-    		if(ValidateUtil.isNotNull(rs.getString("nursename"))&&!ValidateUtil.isNotNull(rs.getString("nurseno"))){
-    			nurse = setUser(rs.getString("nursename"), rs.getString("nurseno"), department, org, 5);
+    		if(status==1){
+    			//插入医生相关表
+    			doctor = setDoctorByResultSet(rs, org, inHospitalDepartment, doctor);
+    			//插入护士相关
+    			nurse = setNurseByResultSet(rs, org, inHospitalDepartment, nurse);
+    		}else if(status==2){
+    			//插入医生相关表
+    			doctor = setDoctorByResultSet(rs, org, outHospitalDepartment, doctor);
+    			//插入护士相关
+    			nurse = setNurseByResultSet(rs, org, outHospitalDepartment, nurse);
     		}
     		//验证通过的情况下插入患者表
     		if(s.getIsValid()==1){
@@ -230,11 +244,44 @@ public class HisDateService {
     			s.setsPatientEntity(patient);
     		}
     		//住院信息赋值
-    		setInhospitalDateByResultSet(rs, orgId, status, department, s,doctor,nurse,2);
+    		setInhospitalDateByResultSet(rs, orgId, status, inHospitalDepartment,outHospitalDepartment, s,doctor,nurse,2);
     		inhospitalMapper.updateInhospital(s);
     	}
 	}
 	
+	private SUserEntity setDoctorByElement(Element element, SOrgEntity org, SDepartmentEntity department,
+			SUserEntity doctor) throws SQLException {
+		if(element.element("maindoctorname") != null&&ValidateUtil.isNotNull(element.element("maindoctorname").getText())&&element.element("maindoctorid") != null&&ValidateUtil.isNotNull(element.element("maindoctorid").getText())){
+			doctor = setUser(element.element("maindoctorname").getText(),element.element("maindoctorid").getText(),department,org,4);
+		}
+		return doctor;
+	}
+	
+	private SUserEntity setNurseByElement(Element element, SOrgEntity org, SDepartmentEntity department,
+			SUserEntity nurse) throws SQLException {
+		if(element.element("nurseno") != null&&ValidateUtil.isNotNull(element.element("nurseno").getText())&&element.element("nursename") != null&&ValidateUtil.isNotNull(element.element("nursename").getText())){
+			//插入护士相关
+			nurse = setUser(element.element("nursename").getText(),element.element("nurseno").getText(),department, org, 5);
+		}
+		return nurse;
+	}
+	
+	private SUserEntity setNurseByResultSet(ResultSet rs, SOrgEntity org, SDepartmentEntity inHospitalDepartment,
+			SUserEntity nurse) throws SQLException {
+		if(ValidateUtil.isNotNull(rs.getString("nursename"))&&!ValidateUtil.isNotNull(rs.getString("nurseno"))){
+			nurse = setUser(rs.getString("nursename"), rs.getString("nurseno"), inHospitalDepartment, org, 5);
+		}
+		return nurse;
+	}
+
+	private SUserEntity setDoctorByResultSet(ResultSet rs, SOrgEntity org, SDepartmentEntity inHospitalDepartment,
+			SUserEntity doctor) throws SQLException {
+		if(ValidateUtil.isNotNull(rs.getString("maindoctorid"))&&ValidateUtil.isNotNull(rs.getString("maindoctorname"))){
+			doctor = setUser(rs.getString("maindoctorname"),rs.getString("maindoctorid"),inHospitalDepartment,org,4);
+		}
+		return doctor;
+	}
+
 	/**
 	 * 校验数据(ResultSet)
 	 * @param rs
@@ -685,7 +732,7 @@ public class HisDateService {
 	 * @param methodType
 	 */
 	private void setInhospitalDateByElement(Element element, Integer orgId, Integer status,
-			SDepartmentEntity inhospitalDepartment, SInhospitalEntity s,SUserEntity doctor,SUserEntity nurse,Integer methodType) {
+			SDepartmentEntity inhospitalDepartment,SDepartmentEntity outhospitalDepartment,SInhospitalEntity s,SUserEntity doctor,SUserEntity nurse,Integer methodType) {
 		//插入住院信息表
 		s.setInhospitaldepartment(inhospitalDepartment.getName());
 		s.setInhospitaldepartmentid(inhospitalDepartment.getId());
@@ -751,6 +798,10 @@ public class HisDateService {
 		 * 院后
 		 */
 		if(status==2){
+			if(outhospitalDepartment!=null){
+				s.setOuthospitaldepartmentid(outhospitalDepartment.getId());
+				s.setOuthospitaldepartmentname(outhospitalDepartment.getName());
+			}
 			//出院时间
 			if(element.element("outhospitaldatehome")!=null&&ValidateUtil.isNotNull(element.element("outhospitaldatehome").getText())){
 				s.setOuthospitaldate(Timestamp.valueOf(element.element("outhospitaldatehome").getText()+ "00:00:00"));
@@ -793,11 +844,11 @@ public class HisDateService {
 	 * @param doctor
 	 * @throws SQLException
 	 */
-	private void setInhospitalDateByResultSet(ResultSet rs, Integer orgId, Integer status, SDepartmentEntity inhospitalDepartment,
+	private void setInhospitalDateByResultSet(ResultSet rs, Integer orgId, Integer status, SDepartmentEntity inHospitalDepartment,SDepartmentEntity outHospitalDepartment,
 			SInhospitalEntity s,SUserEntity doctor,SUserEntity nurse,Integer methodType) throws SQLException {
 		//插入住院信息表
-		s.setInhospitaldepartment(inhospitalDepartment.getName());
-		s.setInhospitaldepartmentid(inhospitalDepartment.getId());
+		s.setInhospitaldepartment(inHospitalDepartment.getName());
+		s.setInhospitaldepartmentid(inHospitalDepartment.getId());
 		s.setInhospitaldate(Timestamp.valueOf(rs.getString("INHOSPITALDATE")));
 		if(doctor!=null){
 			s.setMaindoctor(doctor.getName());
@@ -825,19 +876,27 @@ public class HisDateService {
 		s.setInpatientward(rs.getString("inpatientward"));
 		s.setHospitalbed(rs.getString("hospitalbed"));
 		s.setCosttype(rs.getString("costtype"));
-		s.setSchedulingstate(1);
 		s.setInhospitaldays(rs.getInt("inhospitaldays"));
 		//管理状态(暂时自动分配)
-		s.setManagestate(1);
-		
+		if(methodType==1){
+			s.setSchedulingstate(1);
+		}
 		/**
 		 * 院后
 		 */
 		if(status==2){
+			if(outHospitalDepartment!=null){
+				s.setOuthospitaldepartmentid(outHospitalDepartment.getId());
+				s.setOuthospitaldepartmentname(outHospitalDepartment.getName());
+			}
 			s.setOuthospitaldate(Timestamp.valueOf(rs.getString("OUTHOSPITALDATEHOME")));
 			s.setOuthospitaldescription(rs.getString("outhospitaldescription"));
 			s.setInhospitalstatus(2);
-			//出院科室s.setOuthospitaldepartmentid();
+			s.setManagestate(2);
+		}else{
+			if(methodType==1){
+				s.setManagestate(1);
+			}
 		}
 		s.setPatientHisId(rs.getString("PATIENTID_HIS"));
 	}
