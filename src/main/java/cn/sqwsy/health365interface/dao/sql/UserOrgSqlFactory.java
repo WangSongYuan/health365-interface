@@ -21,6 +21,9 @@ public class UserOrgSqlFactory {
         if(ValidateUtil.isNotNull(para.get("orgid").toString())){
         	sql.WHERE("orgid='"+para.get("orgid")+"'");
         }
+        if(ValidateUtil.isNotNull(para.get("typeId").toString())){
+        	sql.WHERE("typeId="+para.get("typeId"));
+        }
         return sql.toString();
 	}
 	
@@ -35,6 +38,9 @@ public class UserOrgSqlFactory {
 	        }
 	        if(ValidateUtil.isNotNull(userOrg.getOrgid().toString())){ 
 	            sql.VALUES("orgid", "#{orgid}");
+	        }
+	        if(userOrg.getTypeId()!=null){ 
+	            sql.VALUES("typeId", "#{typeId}");
 	        } 
 	        return sql.toString();
 	}

@@ -12,6 +12,8 @@ public class SUserorgEntity extends PO {
 	/**orgid*/
 	
 	private java.lang.Integer orgid;
+	
+	private java.lang.Integer typeId;//1住院 2出院 3门诊
 	public java.lang.Integer getId() {
 		return id;
 	}
@@ -35,5 +37,11 @@ public class SUserorgEntity extends PO {
 	}
 	public void setOrgid(java.lang.Integer orgid) {
 		this.orgid = orgid;
+	}
+	public java.lang.Integer getTypeId() {
+		return typeId;
+	}
+	public void setTypeId(java.lang.Integer typeId) {
+		this.typeId = typeId;
 	}
 }

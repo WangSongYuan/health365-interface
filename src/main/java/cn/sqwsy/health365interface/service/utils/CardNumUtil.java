@@ -11,6 +11,75 @@ public class CardNumUtil {
 	private static int power[] = { 7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2 };
 
 	/**
+	 * 判断身份证号码是否为空(为空返回true)
+	 * @param idcard
+	 * @return
+	 */
+	public static boolean isNull(String idcard){
+		if(idcard==null||idcard.equals("")){
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * 判断身份证号码长度是否正确(正确返回true)
+	 * @param idcard
+	 * @return
+	 */
+	public static boolean isLength(String idcard){
+		if(idcard.length() != 18){
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * 判断身份证号码前17位是否为纯数字(正确返回true)
+	 * @param idcard
+	 * @return
+	 */
+	public static boolean isCard17(String idcard){
+		// 获取前17位
+		String idcard17 = idcard.substring(0, 17);
+		// 是否都为数字
+		if (!isDigital(idcard17)) {
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * 判断身份证号校验码(正确返回true)
+	 * @param idcard
+	 * @return
+	 */
+	public static boolean isCheckCode(String idcard){
+		// 获取前17位
+		String idcard17 = idcard.substring(0, 17);
+		// 获取第18位
+		String idcard18Code = idcard.substring(17, 18);
+		char c[] = null;
+		String checkCode = "";
+		// 是否都为数字
+		c = idcard17.toCharArray();
+		int bit[] = new int[idcard17.length()];
+		bit = converCharToInt(c);
+		int sum17 = 0;
+		sum17 = getPowerSum(bit);
+		// 将和值与11取模得到余数进行校验码判断
+		checkCode = getCheckCodeBySum(sum17);
+		if (null == checkCode) {
+			return false;
+		}
+		// 将身份证的第18位与算出来的校码进行匹配，不相等就为假
+		if (!idcard18Code.equalsIgnoreCase(checkCode)) {
+			return false;
+		}
+		return true;
+	}
+	
+	/**
 	 * 判断18位身份证号码的合法性
 	 * @param idcard
 	 * @return

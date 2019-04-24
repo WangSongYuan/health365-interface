@@ -8,7 +8,7 @@ public class SRoleEntity extends PO {
 
 	private java.sql.Timestamp createtime;
 	
-	private Integer typeId;//角色类别 1、超级管理员 2、医院管理员 3、疾病管理师 4、专科医生 5、主管护士6、科室管理员、7、疾病管理中心管理员
+	private Integer typeId;//角色类别 1、超级管理员 2、医院管理员 3、院中疾病管理师 4、专科医生 5、主管护士6、院后疾病管理师7、科室管理员 8、院中疾病管理中心管理员 9、院后疾病管理中心管理员
 	
 	private Integer orgId;//医院Id
 	private transient boolean selected = false;

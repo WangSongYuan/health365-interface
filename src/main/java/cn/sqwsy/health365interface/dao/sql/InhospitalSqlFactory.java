@@ -12,13 +12,13 @@ public class InhospitalSqlFactory {
         SQL sql = new SQL();
         sql.SELECT("*");
         sql.FROM("s_inhospital");
-        if(!para.get("patientHisId").equals("")){
+        if(para.get("patientHisId")!=null&&!para.get("patientHisId").equals("")){
         	sql.WHERE("patientHisId='"+para.get("patientHisId")+"'");
         }
-        if(!para.get("inhospitalcount").equals("")){
+        if(para.get("inhospitalcount")!=null&&!para.get("inhospitalcount").equals("")){
         	sql.WHERE("inhospitalcount="+para.get("inhospitalcount"));
         }
-        if(!para.get("visitnum").equals("")){
+        if(para.get("visitnum")!=null&&!para.get("visitnum").equals("")){
         	sql.WHERE("visitnum="+para.get("visitnum"));
         }
         return sql.toString();
@@ -187,11 +187,6 @@ public class InhospitalSqlFactory {
 	    	if(ValidateUtil.isNotNull(inhospital.getOuthospitaldescription())){ 
 	    		sql.VALUES("outhospitaldescription", "#{outhospitaldescription}");
 	    	}//出院情况
-
-	    	/*
-	    	 *修改字段(栗)
-	    	 */
-	    	//<---------------------------------->
 	    	if(inhospital.getInhospitalstatus()!=null){
 	    		sql.VALUES("inhospitalstatus", "#{inhospitalstatus}");
 	    	}//住院状态1.住院2.出院
@@ -199,11 +194,7 @@ public class InhospitalSqlFactory {
 	    		sql.VALUES("schedulingstate", "#{schedulingstate}");
 	    		
 	    	}//排期状态1.未排期2.已排期3.勿访4.24小时内出院等5.排期过期(24小时前医生未排期的直接设置成排期过期)
-	    	//<---------------------------------->
-	    	/*
-	    	 * 增加字段(栗)
-	    	 */
-	    	//<---------------------------------->
+
 	    	if(ValidateUtil.isNotNull(inhospital.getDonotvisitthecause())){ 
 	    		sql.VALUES("donotvisitthecause", "#{donotvisitthecause}");
 	    	}//勿訪原因
@@ -273,6 +264,8 @@ public class InhospitalSqlFactory {
 	    	
 	    	if(ValidateUtil.isNotNull(inhospital.getErrorMsg())){
 	    		sql.VALUES("errorMsg", "#{errorMsg}");
+	    	}else{
+	    		sql.VALUES("errorMsg", null);
 	    	}//错误原因
 	        return sql.toString();
 	}
@@ -513,6 +506,8 @@ public class InhospitalSqlFactory {
 	    	
 	    	if(ValidateUtil.isNotNull(inhospital.getErrorMsg())){
 	    		sql.SET("errorMsg= #{errorMsg}");
+	    	}else{
+	    		sql.SET("errorMsg=null");
 	    	}//错误原因
 	    	sql.WHERE("id=#{id}");
 		return sql.toString();
