@@ -122,6 +122,7 @@ public class SInhospitalEntity extends PO {
 	private String outhospitaltype;//离院方式(医嘱离院,医嘱转院,医嘱转社区卫生服务机构/乡镇卫生院,非医嘱离院,死亡,其他)
 	private String pathologydiagnosename;//病理诊断名称
 	private String pathologydiagnosecode;//病理诊断码
+	private Integer userinfoid;//操作用户ID(本条数据操作人)
 	//<---------------------------------->
 	//展示字段
 	//<---------------------------------->
@@ -139,7 +140,41 @@ public class SInhospitalEntity extends PO {
 	
 	private String errorMsg;//错误原因
 	
-	private String outhospitaldiagnoseicd;//出院诊断ICD
+	private String treatplan;//治疗方案
+	
+	private String outhospitaldiagnoseicd;//出院诊断ICD	
+	private String outhospitinfo; //出院情况
+	private String outhospitrecordid;  //获取此患者电子病历-出院记录的唯一标识(电子病历-出院记录详细格式看对应的接口文档，唯一标识不一致请沟通)
+	private String outhospitalchinadoctordiagnosediseasname; //出院中医诊断疾病名称
+	private String outhospitalchinadoctordiagnosediseascode; //出院中医诊断疾病名称编码
+	private String outhospitalchinadoctordiagnosecardname; //出院中医诊断证型
+	private String outhospitalchinadoctordiagnosecardcode; //出院中医诊断证型编码
+	private String mainoperationname; //主要手术名称
+	private String mainoperationcode; //主要手术编码
+	private String otheroperationnameone; //其他手术名称1
+	private String otheroperationcodeone; //其他手术编码1
+	private String otheroperationnametwo; //其他手术名称2
+	private String otheroperationcodetwo; //其他手术编码2
+	private String otheroperationnamethree; //其他手术名称3
+	private String otheroperationcodethree; //其他手术编码3
+	private String otheroperationnamefour; //其他手术名称4
+	private String otheroperationcodefour; //其他手术编码4
+	private String outhospitalotherdiagnosenameone;  //出院其他诊断名1 
+	private String outhospitalotherdiagnosecodeone; //出院其他诊断编码1
+	private String outhospitalotherdiagnosenametwo; //出院其他诊断名2
+	private String outhospitalotherdiagnosecodetwo; //出院其他诊断编码2
+	private String outhospitalotherdiagnosenamethree; //出院其他诊断名3
+	private String outhospitalotherdiagnosecodethree; //出院其他诊断编码3
+	private String outhospitalotherdiagnosenamefour; //出院其他诊断名4
+	private String outhospitalotherdiagnosecodefour; //出院其他诊断编码4
+	private String outhospitalotherdiagnosenamefive; //出院其他诊断名5
+	private String outhospitalotherdiagnosecodefive; //出院其他诊断编码5
+	private String owncost; //自费金额 
+	private String healthinsurancecost; //医保金额
+	private String diestatus; //死亡状态
+	private String nursename; //管床护士（责任护士）名称
+	private String nurseno; //管床护士id（责任护士）唯一标识
+	private String zy_code; //一次住院记录唯一编码
 	
 	public java.lang.Integer getId() {
 		return id;
@@ -611,5 +646,277 @@ public class SInhospitalEntity extends PO {
 
 	public void setOuthospitaldiagnoseicd(String outhospitaldiagnoseicd) {
 		this.outhospitaldiagnoseicd = outhospitaldiagnoseicd;
+	}
+
+	public String getTreatplan() {
+		return treatplan;
+	}
+
+	public void setTreatplan(String treatplan) {
+		this.treatplan = treatplan;
+	}
+
+	public Integer getUserinfoid() {
+		return userinfoid;
+	}
+
+	public void setUserinfoid(Integer userinfoid) {
+		this.userinfoid = userinfoid;
+	}
+
+	public String getOuthospitinfo() {
+		return outhospitinfo;
+	}
+
+	public void setOuthospitinfo(String outhospitinfo) {
+		this.outhospitinfo = outhospitinfo;
+	}
+
+	public String getOuthospitrecordid() {
+		return outhospitrecordid;
+	}
+
+	public void setOuthospitrecordid(String outhospitrecordid) {
+		this.outhospitrecordid = outhospitrecordid;
+	}
+
+	public String getOuthospitalchinadoctordiagnosediseasname() {
+		return outhospitalchinadoctordiagnosediseasname;
+	}
+
+	public void setOuthospitalchinadoctordiagnosediseasname(String outhospitalchinadoctordiagnosediseasname) {
+		this.outhospitalchinadoctordiagnosediseasname = outhospitalchinadoctordiagnosediseasname;
+	}
+
+	public String getOuthospitalchinadoctordiagnosediseascode() {
+		return outhospitalchinadoctordiagnosediseascode;
+	}
+
+	public void setOuthospitalchinadoctordiagnosediseascode(String outhospitalchinadoctordiagnosediseascode) {
+		this.outhospitalchinadoctordiagnosediseascode = outhospitalchinadoctordiagnosediseascode;
+	}
+
+	public String getOuthospitalchinadoctordiagnosecardname() {
+		return outhospitalchinadoctordiagnosecardname;
+	}
+
+	public void setOuthospitalchinadoctordiagnosecardname(String outhospitalchinadoctordiagnosecardname) {
+		this.outhospitalchinadoctordiagnosecardname = outhospitalchinadoctordiagnosecardname;
+	}
+
+	public String getOuthospitalchinadoctordiagnosecardcode() {
+		return outhospitalchinadoctordiagnosecardcode;
+	}
+
+	public void setOuthospitalchinadoctordiagnosecardcode(String outhospitalchinadoctordiagnosecardcode) {
+		this.outhospitalchinadoctordiagnosecardcode = outhospitalchinadoctordiagnosecardcode;
+	}
+
+	public String getMainoperationname() {
+		return mainoperationname;
+	}
+
+	public void setMainoperationname(String mainoperationname) {
+		this.mainoperationname = mainoperationname;
+	}
+
+	public String getMainoperationcode() {
+		return mainoperationcode;
+	}
+
+	public void setMainoperationcode(String mainoperationcode) {
+		this.mainoperationcode = mainoperationcode;
+	}
+
+	public String getOtheroperationnameone() {
+		return otheroperationnameone;
+	}
+
+	public void setOtheroperationnameone(String otheroperationnameone) {
+		this.otheroperationnameone = otheroperationnameone;
+	}
+
+	public String getOtheroperationcodeone() {
+		return otheroperationcodeone;
+	}
+
+	public void setOtheroperationcodeone(String otheroperationcodeone) {
+		this.otheroperationcodeone = otheroperationcodeone;
+	}
+
+	public String getOtheroperationnametwo() {
+		return otheroperationnametwo;
+	}
+
+	public void setOtheroperationnametwo(String otheroperationnametwo) {
+		this.otheroperationnametwo = otheroperationnametwo;
+	}
+
+	public String getOtheroperationcodetwo() {
+		return otheroperationcodetwo;
+	}
+
+	public void setOtheroperationcodetwo(String otheroperationcodetwo) {
+		this.otheroperationcodetwo = otheroperationcodetwo;
+	}
+
+	public String getOtheroperationnamethree() {
+		return otheroperationnamethree;
+	}
+
+	public void setOtheroperationnamethree(String otheroperationnamethree) {
+		this.otheroperationnamethree = otheroperationnamethree;
+	}
+
+	public String getOtheroperationcodethree() {
+		return otheroperationcodethree;
+	}
+
+	public void setOtheroperationcodethree(String otheroperationcodethree) {
+		this.otheroperationcodethree = otheroperationcodethree;
+	}
+
+	public String getOtheroperationnamefour() {
+		return otheroperationnamefour;
+	}
+
+	public void setOtheroperationnamefour(String otheroperationnamefour) {
+		this.otheroperationnamefour = otheroperationnamefour;
+	}
+
+	public String getOtheroperationcodefour() {
+		return otheroperationcodefour;
+	}
+
+	public void setOtheroperationcodefour(String otheroperationcodefour) {
+		this.otheroperationcodefour = otheroperationcodefour;
+	}
+
+	public String getOuthospitalotherdiagnosenameone() {
+		return outhospitalotherdiagnosenameone;
+	}
+
+	public void setOuthospitalotherdiagnosenameone(String outhospitalotherdiagnosenameone) {
+		this.outhospitalotherdiagnosenameone = outhospitalotherdiagnosenameone;
+	}
+
+	public String getOuthospitalotherdiagnosecodeone() {
+		return outhospitalotherdiagnosecodeone;
+	}
+
+	public void setOuthospitalotherdiagnosecodeone(String outhospitalotherdiagnosecodeone) {
+		this.outhospitalotherdiagnosecodeone = outhospitalotherdiagnosecodeone;
+	}
+
+	public String getOuthospitalotherdiagnosenametwo() {
+		return outhospitalotherdiagnosenametwo;
+	}
+
+	public void setOuthospitalotherdiagnosenametwo(String outhospitalotherdiagnosenametwo) {
+		this.outhospitalotherdiagnosenametwo = outhospitalotherdiagnosenametwo;
+	}
+
+	public String getOuthospitalotherdiagnosecodetwo() {
+		return outhospitalotherdiagnosecodetwo;
+	}
+
+	public void setOuthospitalotherdiagnosecodetwo(String outhospitalotherdiagnosecodetwo) {
+		this.outhospitalotherdiagnosecodetwo = outhospitalotherdiagnosecodetwo;
+	}
+
+	public String getOuthospitalotherdiagnosenamethree() {
+		return outhospitalotherdiagnosenamethree;
+	}
+
+	public void setOuthospitalotherdiagnosenamethree(String outhospitalotherdiagnosenamethree) {
+		this.outhospitalotherdiagnosenamethree = outhospitalotherdiagnosenamethree;
+	}
+
+	public String getOuthospitalotherdiagnosecodethree() {
+		return outhospitalotherdiagnosecodethree;
+	}
+
+	public void setOuthospitalotherdiagnosecodethree(String outhospitalotherdiagnosecodethree) {
+		this.outhospitalotherdiagnosecodethree = outhospitalotherdiagnosecodethree;
+	}
+
+	public String getOuthospitalotherdiagnosenamefour() {
+		return outhospitalotherdiagnosenamefour;
+	}
+
+	public void setOuthospitalotherdiagnosenamefour(String outhospitalotherdiagnosenamefour) {
+		this.outhospitalotherdiagnosenamefour = outhospitalotherdiagnosenamefour;
+	}
+
+	public String getOuthospitalotherdiagnosecodefour() {
+		return outhospitalotherdiagnosecodefour;
+	}
+
+	public void setOuthospitalotherdiagnosecodefour(String outhospitalotherdiagnosecodefour) {
+		this.outhospitalotherdiagnosecodefour = outhospitalotherdiagnosecodefour;
+	}
+
+	public String getOuthospitalotherdiagnosenamefive() {
+		return outhospitalotherdiagnosenamefive;
+	}
+
+	public void setOuthospitalotherdiagnosenamefive(String outhospitalotherdiagnosenamefive) {
+		this.outhospitalotherdiagnosenamefive = outhospitalotherdiagnosenamefive;
+	}
+
+	public String getOuthospitalotherdiagnosecodefive() {
+		return outhospitalotherdiagnosecodefive;
+	}
+
+	public void setOuthospitalotherdiagnosecodefive(String outhospitalotherdiagnosecodefive) {
+		this.outhospitalotherdiagnosecodefive = outhospitalotherdiagnosecodefive;
+	}
+
+	public String getOwncost() {
+		return owncost;
+	}
+
+	public void setOwncost(String owncost) {
+		this.owncost = owncost;
+	}
+
+	public String getHealthinsurancecost() {
+		return healthinsurancecost;
+	}
+
+	public void setHealthinsurancecost(String healthinsurancecost) {
+		this.healthinsurancecost = healthinsurancecost;
+	}
+
+	public String getDiestatus() {
+		return diestatus;
+	}
+
+	public void setDiestatus(String diestatus) {
+		this.diestatus = diestatus;
+	}
+
+	public String getNursename() {
+		return nursename;
+	}
+
+	public void setNursename(String nursename) {
+		this.nursename = nursename;
+	}
+
+	public String getNurseno() {
+		return nurseno;
+	}
+
+	public void setNurseno(String nurseno) {
+		this.nurseno = nurseno;
+	}
+
+	public String getZy_code() {
+		return zy_code;
+	}
+
+	public void setZy_code(String zy_code) {
+		this.zy_code = zy_code;
 	}
 }

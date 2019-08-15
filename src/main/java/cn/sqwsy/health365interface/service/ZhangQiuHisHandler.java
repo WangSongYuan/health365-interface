@@ -57,7 +57,7 @@ public class ZhangQiuHisHandler extends HisDateService{
 		        	if(ValidateUtil.isNotNull(rs.getString("PATIENTID_HIS"))&&ValidateUtil.isNotNull(rs.getString("inhospitalcount"))){
 		        		para.put("patientHisId", rs.getString("PATIENTID_HIS"));
 		        		para.put("inhospitalcount", rs.getString("inhospitalcount"));
-		        		startGrabDataByResultSet(rs, para, 1,1);
+		        		startGrabDataByResultSet(rs, para, 1,1,false);
 		        	}
 		        }
 		        for(int i=0;i<=7;i++){
@@ -85,6 +85,23 @@ public class ZhangQiuHisHandler extends HisDateService{
 		        				s.setManagestate(2);
 		        	    		inhospitalMapper.updateInhospital(s);
 		        	    	}
+			        	}
+			        }
+		        }
+		        //转科室处理
+		        List<Map<String, String>> list = inhospitalMapper.getInhospitalAndDepartmentId();
+		        for(Map<String, String> s:list){
+			        String zksSql = "SELECT * FROM V_GETOUTHOSPITALLIST WHERE PATIENTID_HIS = ? and INHOSPITALCOUNT=?";
+			        pstmt = conn.prepareStatement(zksSql);
+			        pstmt.setString(1, s.get("patientHisId"));
+			        pstmt.setString(2, s.get("inhospitalcount"));
+			        rs = pstmt.executeQuery();
+			        if(rs.next()){
+			        	if(!rs.getString("INHOSPITALDEPARTMENTID").equals(s.get("THIRDPARTYHISID"))){
+			        		Map<String,Object> para = new HashMap<>();
+			        		para.put("patientHisId", rs.getString("PATIENTID_HIS"));
+			        		para.put("inhospitalcount", rs.getString("inhospitalcount"));
+			        		startGrabDataByResultSet(rs, para, 1,1,true);
 			        	}
 			        }
 		        }

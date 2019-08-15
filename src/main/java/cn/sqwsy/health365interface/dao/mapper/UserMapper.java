@@ -34,7 +34,7 @@ public interface UserMapper {
 	 * @param departmentId
 	 * @return
 	 */
-	@Select("SELECT u.id, COUNT(i.inDiseaseManagerId) AS num FROM s_user u LEFT JOIN s_inhospital i ON u.id = i.inDiseaseManagerId LEFT JOIN s_userrole ur ON ur.userid = u.id LEFT JOIN s_role r ON ur.roleid = r.id LEFT JOIN s_userorg uo ON uo.USERID = u.id WHERE r.typeId = 3 AND uo.DEPARTMENTID = #{departmentId} GROUP BY u.id ORDER BY num LIMIT 1")
+	@Select("SELECT u.id, COUNT(i.inDiseaseManagerId) AS num FROM s_user u LEFT JOIN s_inhospital i ON u.id = i.inDiseaseManagerId LEFT JOIN s_userrole ur ON ur.userid = u.id LEFT JOIN s_role r ON ur.roleid = r.id LEFT JOIN s_userorg uo ON uo.USERID = u.id WHERE r.typeId = 3 OR r.typeId = 8 AND uo.DEPARTMENTID = #{departmentId} GROUP BY u.id ORDER BY num LIMIT 1")
 	SUserEntity getOrderDiseaseManager(@Param("departmentId")Integer departmentId);
 	
 	@UpdateProvider(type = UserSqlFactory.class, method = "updateUser")

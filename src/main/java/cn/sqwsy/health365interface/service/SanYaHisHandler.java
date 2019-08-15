@@ -17,7 +17,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
-import org.springframework.scheduling.annotation.Scheduled;
+//import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import cn.sqwsy.health365interface.dao.entity.SDepartmentEntity;
@@ -31,46 +31,50 @@ import cn.sqwsy.health365interface.service.utils.ValidateUtil;
 @Component
 public class SanYaHisHandler extends HisDateService {
 
-	@Scheduled(fixedDelay = 3000)
+	//@Scheduled(fixedDelay = 3000)
 	public void fixedRateJob() {
-		for(int i=1;i<=30;i++){
+		try {
 			setKs();
 			setJbgls();
+			setdefaultAdmin();
 			Map<String, Object> departmentPara = new HashMap<>();
 			departmentPara.put("orgId", 1);
 			departmentPara.put("state", 1);
 			List<SDepartmentEntity> departments = departmentMapper.getDepartmentsList(departmentPara);
+			//住院记录
+			for(SDepartmentEntity department:departments){
+				StringBuffer sb = new StringBuffer();
+				sb.append("^^1^").append(department.getThirdpartyhisid());
+				callinginterface(sb, 1);
+			}
 			
-			Calendar outStartCal = Calendar.getInstance();
-			outStartCal.add(Calendar.DAY_OF_MONTH, -i);
-			outStartCal.set(Calendar.HOUR_OF_DAY, 0);
-			outStartCal.set(Calendar.SECOND, 0);
-			outStartCal.set(Calendar.MINUTE, 0);
-			Date outSstartTime = outStartCal.getTime();
-			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-			String startTime = df.format(outSstartTime);
-			
-			Calendar outEndCal = Calendar.getInstance();
-			outEndCal.add(Calendar.DAY_OF_MONTH, -i);
-			outEndCal.set(Calendar.HOUR_OF_DAY, 0);
-			outEndCal.set(Calendar.SECOND, 0);
-			outEndCal.set(Calendar.MINUTE, 0);
-			Date outEndTime = outEndCal.getTime();
-			String endTime = df.format(outEndTime);
-			
-			try {
-				setdefaultAdmin();
+			//出院记录
+			for(int i=1;i<=7;i++){
+				Calendar outStartCal = Calendar.getInstance();
+				outStartCal.add(Calendar.DAY_OF_MONTH, -i);
+				outStartCal.set(Calendar.HOUR_OF_DAY, 0);
+				outStartCal.set(Calendar.SECOND, 0);
+				outStartCal.set(Calendar.MINUTE, 0);
+				Date outSstartTime = outStartCal.getTime();
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+				String startTime = df.format(outSstartTime);
+				
+				Calendar outEndCal = Calendar.getInstance();
+				outEndCal.add(Calendar.DAY_OF_MONTH, -i);
+				outEndCal.set(Calendar.HOUR_OF_DAY, 0);
+				outEndCal.set(Calendar.SECOND, 0);
+				outEndCal.set(Calendar.MINUTE, 0);
+				Date outEndTime = outEndCal.getTime();
+				String endTime = df.format(outEndTime);
 				for (SDepartmentEntity department : departments) {
 					StringBuffer sb = new StringBuffer();
-					sb.append("^^1^").append(department.getThirdpartyhisid());
-					callinginterface(sb, 1);
 					sb.setLength(0);
 					sb.append(startTime + "^" + endTime + "^2^").append(department.getThirdpartyhisid());
 					callinginterface(sb, 2);
 				}
-			} catch (SQLException e) {
-				e.printStackTrace();
 			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -101,7 +105,7 @@ public class SanYaHisHandler extends HisDateService {
 			while (it.hasNext()) {
 				Element element = it.next();
 				Map<String, Object> para = new HashMap<>();
-				// 章丘数据唯一标识
+				// 三亚数据唯一标识
 				if (ValidateUtil.isNotNull(element.element("visitnum").getText())) {
 					para.put("visitnum", element.element("visitnum").getText());
 					startGrabDataByElement(element, para, 1, status);
@@ -138,10 +142,11 @@ public class SanYaHisHandler extends HisDateService {
 		SOrgEntity org = orgMapper.getOrg(orgPara);
 		for (SDepartmentEntity department : departments) {
 			SRoleEntity adminRole = getUserRole(org, user, 2);
-			// 插入医生角色关联表
+			// 插入角色关联表
 			setUserRole(user, adminRole);
-			// 插入医生用户机构科室关联表
-			setUserOrg(user, org, department);
+			// 插入用户机构科室关联表
+			setUserOrg(user, org, department,1);
+			setUserOrg(user, org, department,2);
 		}
 	}
 
@@ -259,6 +264,7 @@ public class SanYaHisHandler extends HisDateService {
 						userOrg.setDepartmentid(inhospitalDepartment.getId());
 						userOrg.setOrgid(1);
 						userOrg.setUserid(user.getId());
+						userOrg.setTypeId(1);
 						userOrgMapper.setUserOrg(userOrg);
 					}
 				}

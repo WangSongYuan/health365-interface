@@ -65,7 +65,7 @@ public class SPatientEntity extends PO {
 	
 	private java.lang.String phone;//最近一次更新的手机号
 	
-	private java.lang.String phonetwo;
+	private java.lang.String phonetwo;//患者手机2
 	
 	private java.lang.String bloodtype;//血型
 	private String phonethree;//病人修改电话
@@ -73,7 +73,10 @@ public class SPatientEntity extends PO {
 	 * 增加字段(栗)
 	 */
 	private String relation;//与联系人关系
+	
 	private Integer orgId;//医院ID
+	
+	private String companyphone;//公司电话
 
 	public java.lang.Integer getId(){
 		return this.id;
@@ -289,5 +292,13 @@ public class SPatientEntity extends PO {
 
 	public void setPhonetwo(java.lang.String phonetwo) {
 		this.phonetwo = phonetwo;
+	}
+
+	public String getCompanyphone() {
+		return companyphone;
+	}
+
+	public void setCompanyphone(String companyphone) {
+		this.companyphone = companyphone;
 	}
 }

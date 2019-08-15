@@ -4,6 +4,8 @@ import java.util.Map;
 
 import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.SelectProvider;
 import org.apache.ibatis.annotations.UpdateProvider;
 
@@ -22,4 +24,7 @@ public interface PatientMapper {
 	
 	@UpdateProvider(type=PatientSqlFactory.class,method="updatePatient")
 	void updatePatient(SPatientEntity patient);
+	
+	@Select("select * from s_patient where id = #{id}")
+	SPatientEntity getPatinetById(@Param("id") String id);
 }

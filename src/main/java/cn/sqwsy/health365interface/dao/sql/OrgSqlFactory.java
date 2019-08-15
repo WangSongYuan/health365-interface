@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.apache.ibatis.jdbc.SQL;
 
+import cn.sqwsy.health365interface.dao.entity.SOrgEntity;
 import cn.sqwsy.health365interface.service.utils.ValidateUtil;
 
 public class OrgSqlFactory {
@@ -16,26 +17,25 @@ public class OrgSqlFactory {
         }
         return sql.toString();
 	}
-	/*
-	public String setO(SUserEntity user){
+	
+	public String setOrg(SOrgEntity org){
 		 SQL sql = new SQL();
-	        sql.INSERT_INTO("s_user");
-	        if(ValidateUtil.isNotNull(user.getName())){
+	        sql.INSERT_INTO("s_org");
+	        if(ValidateUtil.isNotNull(org.getName())){
 	        	sql.VALUES("name", "#{name}");
 	        }
-	        if(ValidateUtil.isNotNull(user.getJobnum())){
-	        	sql.VALUES("jobnum", "#{jobnum}");
-	        }
-	        if(ValidateUtil.isNotNull(user.getPassword())){ 
-	            sql.VALUES("password", "#{password}");
-	        } 
-	        if(ValidateUtil.isNotNull(user.getThirdpartyhisid())){ 
-	            sql.VALUES("thirdpartyhisid", "#{thirdpartyhisid}");
-	        } 
-	        if(user.getCreatetime()==null){ 
-	            sql.VALUES("createtime", "now()");
-	        }
-	        System.out.println(sql.toString());
+	        sql.VALUES("createtime", "now()");
 	        return sql.toString();
-	}*/
+	}
+	
+	public String updateOrg(SOrgEntity org){
+		 SQL sql = new SQL();
+	        sql.UPDATE("s_org");
+	        if(ValidateUtil.isNotNull(org.getName())){
+	        	sql.SET("name=#{name}");
+	        }
+	        sql.SET("updatetime", "now()");
+	        sql.WHERE("id = #{id}");
+	        return sql.toString();
+	}
 }
