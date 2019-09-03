@@ -22,7 +22,7 @@ public class InhospitalSqlFactory {
         	sql.WHERE("visitnum="+para.get("visitnum"));
         }
         if(para.get("zy_code")!=null&&!para.get("zy_code").equals("")){
-        	sql.WHERE("zy_code="+para.get("zy_code"));
+        	sql.WHERE("zy_code='"+para.get("zy_code")+"'");
         }
         return sql.toString();
 	}
