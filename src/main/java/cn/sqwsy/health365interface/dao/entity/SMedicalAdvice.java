@@ -8,7 +8,6 @@ import java.sql.Timestamp;
  */
 public class SMedicalAdvice extends PO{
 	private Integer id;//ID
-	
 	private String drug_name;//医嘱名称
 	private String drug_dosage;//剂量
 	private String visit_date;//下达时间
@@ -25,7 +24,7 @@ public class SMedicalAdvice extends PO{
 	private String stop_doctor;//停止医生ID
 	private String stop_nurse;//停止护士id
 	private Integer doctor_advice_type;//医嘱类型
-	private Integer medical_advice_time_frame;//医嘱时长
+	private Integer medical_advice_time;//医嘱时长
 	private Integer type=0;//数据类型
 	private Timestamp createTime =  new Timestamp(System.currentTimeMillis());//创建时间
 	private Timestamp updateTime =  new Timestamp(System.currentTimeMillis());//更新时间
@@ -132,11 +131,11 @@ public class SMedicalAdvice extends PO{
 	public void setDoctor_advice_type(Integer doctor_advice_type) {
 		this.doctor_advice_type = doctor_advice_type;
 	}
-	public Integer getMedical_advice_time_frame() {
-		return medical_advice_time_frame;
+	public Integer getMedical_advice_time() {
+		return medical_advice_time;
 	}
-	public void setMedical_advice_time_frame(Integer medical_advice_time_frame) {
-		this.medical_advice_time_frame = medical_advice_time_frame;
+	public void setMedical_advice_time(Integer medical_advice_time) {
+		this.medical_advice_time = medical_advice_time;
 	}
 	public Integer getType() {
 		return type;

@@ -130,7 +130,7 @@ public class YiZhouHisHandler extends HisDateService{
 		        		//3插数据TODO
         	    		startGrabDataByResultSet(rs, para, 1,2,false);
         	    		SInhospitalEntity s = inhospitalMapper.getInhospital(para);
-        	    		if(s!=null){
+        	    		if(s!=null&&ValidateUtil.isNotNull(s.getOuthospitrecordid())){
         	    			//电子病历(出院记录)格式化
         	    			para = new HashMap<>();
         	    			para.put("outhospitrecordid",s.getOuthospitrecordid());

@@ -13,7 +13,7 @@ public class UserSqlFactory {
         sql.SELECT("*");
         sql.FROM("s_user");
         if(para.get("thirdpartyhisid")!=null){
-        	sql.WHERE("thirdpartyhisid="+para.get("thirdpartyhisid"));
+        	sql.WHERE("thirdpartyhisid='"+para.get("thirdpartyhisid")+"'");
         }
         if(para.get("id")!=null){
         	sql.WHERE("id="+para.get("id"));

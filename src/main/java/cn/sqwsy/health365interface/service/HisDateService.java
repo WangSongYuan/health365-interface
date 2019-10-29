@@ -47,6 +47,11 @@ import cn.sqwsy.health365interface.service.utils.CardNumUtil;
 import cn.sqwsy.health365interface.service.utils.HashUtil;
 import cn.sqwsy.health365interface.service.utils.ValidateUtil;
 
+/**
+ * HIS接口数据处理服务
+ * @author wangsongyuan
+ * @version 2.1
+ */
 public class HisDateService {
 	
 	@Autowired
@@ -92,6 +97,7 @@ public class HisDateService {
 	public MessageListMapper messageListMapper;
 	
 	Integer patientAge = null;
+	String cardNum = null;
 	
 	public void startGrabDataByElement(Element element,Map<String,Object> para,Integer orgId,Integer status) throws SQLException{
 		//机构
@@ -155,6 +161,8 @@ public class HisDateService {
     			//插入住院板块完成度表
     			setInhosipitalplate(s,inHospitalDepartment.getId());
     		}
+    		//抓取失败消息推送
+    		sendErrMsg(orgId, s, doctor);
     	}else{
     		validDataByElement(element, s,status);
     		if(status==1){
@@ -169,9 +177,25 @@ public class HisDateService {
     			SPatientEntity patient = setPatientByElement(element, orgId);
     			s.setsPatientEntity(patient);
     		}
+    		if(status==1){
+    			/**
+    			 * 任务分配
+    			 */
+    			if(inHospitalDepartment!=null&&s.getInDiseaseManagerId()==null){
+    				SUserEntity randDiseaseManager = userMapper.getOrderDiseaseManager(inHospitalDepartment.getId());
+    				//没有匹配院中疾病管理师就不分配
+    				if(randDiseaseManager!=null){
+    					s.setInDiseaseManagerId(randDiseaseManager.getId());
+    				}else{
+    					s.setInDiseaseManagerId(null);
+    				}
+    			}
+    		}
     		//住院信息赋值
 			setInhospitalDateByElement(element,orgId,status,inHospitalDepartment,outHospitalDepartment,s,doctor,nurse,2);
     		inhospitalMapper.updateInhospital(s);
+    		//抓取失败消息推送
+    		sendErrMsg(orgId, s, doctor);
     	}
 	}
 
@@ -343,30 +367,12 @@ public class HisDateService {
 			patientAge=null;
 			patientAge = rs.getInt("age");
 		} catch (Exception e) {
-			try {
-				// *生日√
-				Timestamp newbirthday = null;
-				String birthday = rs.getString("birthday");
-				if (ValidateUtil.isNotNull(birthday)) {
-					SimpleDateFormat sf1 = new SimpleDateFormat("yyyyMMdd");
-					DateFormat sf2 = new SimpleDateFormat("yyyy-MM-dd");
-					birthday = sf2.format(sf1.parse(birthday));
-					birthday = birthday + " 00:00:00";
-					newbirthday = Timestamp.valueOf(birthday);
-				}
-				patientAge= getAgeByCardNum(rs.getString("cardnum"),newbirthday);
-			} catch (Exception e2) {
-				if(patientAge==null||patientAge==0){
-					String ageStr=rs.getString("age");
-					if(ageStr.indexOf("岁")==-1){
-						
-					}else{
-						ageStr=ageStr.substring(0, ageStr.indexOf("岁"));
-						patientAge=Integer.valueOf(ageStr);
-					}
-				}
-			}
+			computationalAge(rs.getString("birthday"),rs.getString("cardnum"),rs.getString("age"));
 		}
+		cardNum =null;
+	    cardNum = rs.getString("cardnum");
+	    //wangsongyuan 去掉身份证所有空格 20190821
+		cardNum=cardNum.replace(" ", "");
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式  注意身份证信息为空
 		StringBuffer ap = new StringBuffer( "当前时间："+df.format(new Date())+"您有新的消息:</br>科室:"+rs.getString("inhospitaldepartment")+",主治医师:"+rs.getString("maindoctorname")+",患者姓名:"+rs.getString("name")+"</br>住院号:"+rs.getString("inhospitalid")+",住院次数:"+rs.getString("inhospitalcount")+"</br>错误信息如下:</br>");
 		if(ValidateUtil.isNull(rs.getString("inhospitaldepartmentid"))||ValidateUtil.isNull(rs.getString("inhospitaldepartment"))){
@@ -375,10 +381,10 @@ public class HisDateService {
 		}else if(ValidateUtil.isNull(rs.getString("maindoctorid"))||rs.getString("maindoctorid").equals("-1")){
 			ap.append("</br>主管医师工号为空</br>");
 			s.setIsValid(0);
-		}else if(ValidateUtil.isNull(rs.getString("cardnum"))&&ValidateUtil.isEquals("岁",rs.getString("ageunit"))&& patientAge>9){
+		}else if(ValidateUtil.isNull(cardNum)&&ValidateUtil.isEquals("岁",rs.getString("ageunit"))&& patientAge>9){
 			ap.append("</br>身份证号为空</br>");
 			s.setIsValid(0);
-		}else if(ValidateUtil.isEquals("岁", rs.getString("ageunit")) && patientAge>9 && !CardNumUtil.isValidate18Idcard(rs.getString("cardnum"))){
+		}else if(ValidateUtil.isEquals("岁", rs.getString("ageunit")) && patientAge>9 && !CardNumUtil.isValidate18Idcard(cardNum)){
 			ap.append("</br>身份证号填写错误</br>");
 			s.setIsValid(0);
 		}else{
@@ -396,6 +402,15 @@ public class HisDateService {
 	 * @throws SQLException
 	 */
 	private void validDataByElement(Element element, SInhospitalEntity s,Integer status) {
+		try {
+			patientAge=null;
+			patientAge = Integer.valueOf(element.element("age").getText());
+			if(patientAge==0){
+				computationalAge(element.element("birthday").getText(),element.element("cardnum").getText(),element.element("age").getText());
+			}
+		} catch (Exception e) {
+			computationalAge(element.element("birthday").getText(),element.element("cardnum").getText(),element.element("age").getText());
+		}
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		StringBuffer ap = new StringBuffer();
 		if(status==1){
@@ -411,6 +426,34 @@ public class HisDateService {
 			s.setErrorMsg(ap.toString());			
 		}		
 	}
+
+	/**
+	 * 计算年龄
+	 * @param element
+	 */
+	private void computationalAge(String birthday,String cardnum,String age) {
+		try {
+			// *生日√
+			Timestamp newbirthday = null;
+			if (ValidateUtil.isNotNull(birthday)) {
+				SimpleDateFormat sf1 = new SimpleDateFormat("yyyyMMdd");
+				DateFormat sf2 = new SimpleDateFormat("yyyy-MM-dd");
+				birthday = sf2.format(sf1.parse(birthday));
+				birthday = birthday + " 00:00:00";
+				newbirthday = Timestamp.valueOf(birthday);
+			}
+			patientAge= getAgeByCardNum(cardnum,newbirthday);
+		} catch (Exception e2) {
+			if(patientAge==null||patientAge==0){
+				if(age.indexOf("岁")==-1){
+					
+				}else{
+					age=age.substring(0, age.indexOf("岁"));
+					patientAge=Integer.valueOf(age);
+				}
+			}
+		}
+	}
 	
 	/**
 	 * 校验数据(Element)
@@ -424,28 +467,28 @@ public class HisDateService {
 			ap.append("</br>主管医师工号为空</br>");
 			return false;
 		}
-		if(ValidateUtil.isNull(element.element("cardnum").getText())&&ValidateUtil.isEquals("岁",element.element("ageunit").getText())&& Integer.valueOf(element.element("age").getText())>9){
+		if(ValidateUtil.isNull(element.element("cardnum").getText())&&ValidateUtil.isEquals("岁",element.element("ageunit").getText())&& patientAge>9){
 			ap.append("</br>身份证号为空</br>");
 			return false;
 		}else{
-			if(ValidateUtil.isEquals("岁", element.element("ageunit").getText()) && Integer.valueOf(element.element("age").getText())>9 && !CardNumUtil.isLength(element.element("cardnum").getText())){
+			if(ValidateUtil.isEquals("岁", element.element("ageunit").getText()) && patientAge>9 && !CardNumUtil.isLength(element.element("cardnum").getText())){
 				ap.append("</br>身份证号长度不为18位</br>");
 				return false;
 			}
-			if(ValidateUtil.isEquals("岁", element.element("ageunit").getText()) && Integer.valueOf(element.element("age").getText())>9 && !CardNumUtil.isCard17(element.element("cardnum").getText())){
+			if(ValidateUtil.isEquals("岁", element.element("ageunit").getText()) && patientAge>9 && !CardNumUtil.isCard17(element.element("cardnum").getText())){
 				ap.append("</br>身份证号前17位不为纯数字</br>");
 				return false;
 			}
-			if(ValidateUtil.isEquals("岁", element.element("ageunit").getText()) && Integer.valueOf(element.element("age").getText())>9 && !CardNumUtil.isCheckCode(element.element("cardnum").getText())){
+			if(ValidateUtil.isEquals("岁", element.element("ageunit").getText()) && patientAge>9 && !CardNumUtil.isCheckCode(element.element("cardnum").getText())){
 				ap.append("</br>身份证号校验码错误</br>");
 				return false;
 			}
 		}
-		if(status==2&&((element.element("patientphoneone")==null||ValidateUtil.isNull(element.element("patientphoneone").getText()))&&(element.element("relationphone")==null||ValidateUtil.isNull(element.element("relationphone").getText())))){
+		if(status==2&&((element.element("phone")==null||ValidateUtil.isNull(element.element("phone").getText()))&&(element.element("relationphone")==null||ValidateUtil.isNull(element.element("relationphone").getText())))){
 			ap.append("</br>手机号为空</br>");
 			return false;
 		}else{
-			if(status==2&&((element.element("patientphoneone")!=null&&ValidateUtil.isNotNull(element.element("patientphoneone").getText())&&!isNum(element.element("patientphoneone").getText()))||(element.element("relationphone")!=null&&ValidateUtil.isNotNull(element.element("relationphone").getText())&&!isNum(element.element("relationphone").getText())))){
+			if(status==2&&((element.element("phone")!=null&&ValidateUtil.isNotNull(element.element("phone").getText())&&!isNum(element.element("phone").getText()))||(element.element("relationphone")!=null&&ValidateUtil.isNotNull(element.element("relationphone").getText())&&!isNum(element.element("relationphone").getText())))){
 				ap.append("</br>手机号格式错误</br>");
 				return false;
 			}
@@ -686,28 +729,27 @@ public class HisDateService {
 	 * @throws SQLException
 	 */
 	private SPatientEntity setPatientByResultSet(ResultSet rs,Integer orgId) throws SQLException{
-		String cardnum = rs.getString("cardnum");
 		//如果是新儿童,且没有身份证号
-		if((!CardNumUtil.isValidate18Idcard(cardnum)) && (((ValidateUtil.isEquals("岁",rs.getString("ageunit"))) && patientAge<=9)||(!ValidateUtil.isEquals("岁", rs.getString("ageunit"))))){
+		if((!CardNumUtil.isValidate18Idcard(cardNum)) && (((ValidateUtil.isEquals("岁",rs.getString("ageunit"))) && patientAge<=9)||(!ValidateUtil.isEquals("岁", rs.getString("ageunit"))))){
 			if(ValidateUtil.isNotNull(rs.getString("birthday"))){
-				cardnum = "temp"+HashUtil.MD5Hashing(rs.getString("name"));
+				cardNum = "temp"+HashUtil.MD5Hashing(rs.getString("name"));
 			}else{
-				cardnum = "temp"+HashUtil.MD5Hashing(rs.getString("name")+rs.getString("birthday"));
+				cardNum = "temp"+HashUtil.MD5Hashing(rs.getString("name")+rs.getString("birthday"));
 			}
 		}
 		Map<String,Object> patientPara = new HashMap<>();
 		patientPara.put("orgId", orgId);
-		patientPara.put("cardnum",cardnum);
+		patientPara.put("cardnum",cardNum);
 		
 		SPatientEntity patient = patientMapper.getPatinet(patientPara);
 		
 		if(patient==null){			
 			patient = new SPatientEntity();
-			setPatientDataByResultSet(rs, orgId, cardnum, patient);
+			setPatientDataByResultSet(rs, orgId, cardNum, patient);
 			patientMapper.setPatient(patient);
 		}else{
 			//更新患者
-			setPatientDataByResultSet(rs, orgId, cardnum, patient);
+			setPatientDataByResultSet(rs, orgId, cardNum, patient);
 			patientMapper.updatePatient(patient);
 		}
 		return patient;
@@ -722,7 +764,7 @@ public class HisDateService {
 	private SPatientEntity setPatientByElement(Element element, Integer orgId) {
 		String cardnum = element.element("cardnum").getText();
 		//如果是新儿童,且没有身份证号
-		if((!CardNumUtil.isValidate18Idcard(cardnum)) && (((ValidateUtil.isEquals("岁",element.element("ageunit").getText())) && Integer.valueOf(element.element("ageunit").getText())<=9)||(!ValidateUtil.isEquals("岁", element.element("ageunit").getText())))){
+		if((!CardNumUtil.isValidate18Idcard(cardnum)) && (((ValidateUtil.isEquals("岁",element.element("ageunit").getText())) && patientAge<=9)||(!ValidateUtil.isEquals("岁", element.element("ageunit").getText())))){
 			if(ValidateUtil.isNotNull(element.element("birthday").getText())){
 				cardnum = "temp"+HashUtil.MD5Hashing(element.element("name").getText());
 			}else{
@@ -755,7 +797,7 @@ public class HisDateService {
 	 */
 	private void setPatientDataByElement(Element element, Integer orgId, String cardnum, SPatientEntity patient) {
 		patient.setName(element.element("name").getText());
-		patient.setAge(Integer.valueOf(element.element("age").getText()));
+		patient.setAge(patientAge);
 		patient.setCardnum(cardnum);
 		patient.setSex(element.element("sex").getText());
 		if(element.element("marry") != null){
@@ -796,12 +838,12 @@ public class HisDateService {
 		if(element.element("relationphone")!=null){
 			patient.setRelativephone(element.element("relationphone").getText());
 		}
-		if(element.element("patientphoneone")!=null){
-			patient.setPhone(element.element("patientphoneone").getText());
+		if(element.element("phone")!=null){
+			patient.setPhone(element.element("phone").getText());
 		}
 		//residenttype
-		if(element.element("patientphonetwo")!=null){
-			patient.setPhonetwo(element.element("patientphonetwo").getText());
+		if(element.element("phonetwo")!=null){
+			patient.setPhonetwo(element.element("phonetwo").getText());
 		}
 		if(element.element("bloodtype")!=null){
 			patient.setBloodtype(element.element("bloodtype").getText());
@@ -883,10 +925,12 @@ public class HisDateService {
 	 * @param methodType
 	 */
 	private void setInhospitalDateByElement(Element element, Integer orgId, Integer status,
-			SDepartmentEntity inhospitalDepartment,SDepartmentEntity outhospitalDepartment,SInhospitalEntity s,SUserEntity doctor,SUserEntity nurse,Integer methodType) {
-		//插入住院信息表
-		s.setInhospitaldepartment(inhospitalDepartment.getName());
-		s.setInhospitaldepartmentid(inhospitalDepartment.getId());
+			SDepartmentEntity inHospitalDepartment,SDepartmentEntity outhospitalDepartment,SInhospitalEntity s,SUserEntity doctor,SUserEntity nurse,Integer methodType) {
+		//插入住院科室
+		if(inHospitalDepartment!=null){
+			s.setInhospitaldepartment(inHospitalDepartment.getName());
+			s.setInhospitaldepartmentid(inHospitalDepartment.getId());
+		}
 		s.setInhospitaldate(Timestamp.valueOf(element.element("inhospitaldate").getText()));
 		if(doctor!=null){
 			s.setMaindoctor(doctor.getName());
@@ -957,18 +1001,22 @@ public class HisDateService {
 		if(status==2){
 			if(outhospitalDepartment!=null){
 				s.setOuthospitaldepartmentid(outhospitalDepartment.getId());
-				s.setOuthospitaldepartmentname(outhospitalDepartment.getName());
+				//s.setOuthospitaldepartmentname(outhospitalDepartment.getName());
 			}
 			//出院时间
 			if(element.element("outhospitaldatehome")!=null&&ValidateUtil.isNotNull(element.element("outhospitaldatehome").getText())){
-				s.setOuthospitaldate(Timestamp.valueOf(element.element("outhospitaldatehome").getText()+ "00:00:00"));
+				if(isValidDate(element.element("outhospitaldatehome").getText(), "yyyy-MM-dd HH:mm:ss")){
+					s.setOuthospitaldate(Timestamp.valueOf(element.element("outhospitaldatehome").getText()));
+				}else{
+					s.setOuthospitaldate(Timestamp.valueOf(element.element("outhospitaldatehome").getText()+ "00:00:00"));
+				}
 			}
+			
 			//出院结算时间
-			s.setOuthospitaldateclose(Timestamp.valueOf(element.element("").getText()));
-			//出院情况
-			if(element.element("outhospitaldescription")!=null){
-				s.setOuthospitaldescription(element.element("outhospitaldescription").getText());
+			if(element.element("outhospitaldateclose")!=null&&ValidateUtil.isNotNull(element.element("outhospitaldateclose").getText())){
+				s.setOuthospitaldateclose(Timestamp.valueOf(element.element("outhospitaldateclose").getText()));
 			}
+				
 			//出院诊断
 			if(element.element("outhospitaldiagnose")!=null){
 				s.setOuthospitaldiagnose(element.element("outhospitaldiagnose").getText());
@@ -977,22 +1025,119 @@ public class HisDateService {
 			if(element.element("outhospitaldiagnoseicd")!=null){
 				s.setOuthospitaldiagnoseicd(element.element("outhospitaldiagnoseicd").getText());
 			}
+			//出院情况
+			if(element.element("outhospitaldescription")!=null){
+				s.setOuthospitaldescription(element.element("outhospitaldescription").getText());
+			}
+			
+			//获取此患者电子病历-出院记录的唯一标识
+			s.setOuthospitrecordid(element.element("outhospitrecordid").getText());
+			
+			//出院中医诊断疾病名称
+			s.setOuthospitalchinadoctordiagnosediseasname(element.element("outhospitalchinadoctordiagnosediseasname").getText());
+
+			//出院中医诊断疾病名称编码
+			s.setOuthospitalchinadoctordiagnosediseascode(element.element("outhospitalchinadoctordiagnosediseascode").getText());
+
+			//出院中医诊断证型
+			s.setOuthospitalchinadoctordiagnosecardname(element.element("outhospitalchinadoctordiagnosecardname").getText()); 
+			
+			//出院中医诊断证型编码
+			s.setOuthospitalchinadoctordiagnosecardcode(element.element("outhospitalchinadoctordiagnosecardcode").getText()); 
+			
+			//主要手术名称
+			s.setMainoperationname(element.element("mainoperationname").getText()); 
+			
+			//主要手术编码
+			s.setMainoperationcode(element.element("mainoperationcode").getText()); 
+			
+			//其他手术名称1
+			s.setOtheroperationnameone(element.element("otheroperationnameone").getText()); 
+			
+			//其他手术编码1
+			s.setOtheroperationcodeone(element.element("otheroperationcodeone").getText()); 
+			
+			//其他手术名称2
+			s.setOtheroperationnametwo(element.element("otheroperationnametwo").getText()); 
+			
+			//其他手术编码2
+			s.setOtheroperationcodetwo(element.element("otheroperationcodetwo").getText()); 
+			
+			//其他手术名称3
+			s.setOtheroperationnamethree(element.element("otheroperationnamethree").getText());
+			
+			//其他手术编码3
+			s.setOtheroperationcodethree(element.element("otheroperationcodethree").getText()); 
+			
+			//其他手术名称4
+			s.setOtheroperationnamefour(element.element("otheroperationnamefour").getText());
+			
+			//其他手术编码4
+			s.setOtheroperationcodefour(element.element("otheroperationcodefour").getText());
+			
+			//出院其他诊断名1
+			s.setOuthospitalotherdiagnosenameone(element.element("outhospitalotherdiagnosenameone").getText());   
+			
+			//出院其他诊断编码1
+			s.setOuthospitalotherdiagnosecodeone(element.element("outhospitalotherdiagnosecodeone").getText()); 
+			
+			//出院其他诊断名2
+			s.setOuthospitalotherdiagnosenametwo(element.element("outhospitalotherdiagnosenametwo").getText()); 
+			
+			//出院其他诊断编码2
+			s.setOuthospitalotherdiagnosecodetwo(element.element("outhospitalotherdiagnosecodetwo").getText()); 
+			
+			//出院其他诊断名3
+			s.setOuthospitalotherdiagnosenamethree(element.element("outhospitalotherdiagnosenamethree").getText()); 
+			
+			//出院其他诊断编码3
+			s.setOuthospitalotherdiagnosecodethree(element.element("outhospitalotherdiagnosecodethree").getText()); 
+			
+			//出院其他诊断名4
+			s.setOuthospitalotherdiagnosenamefour(element.element("outhospitalotherdiagnosenamefour").getText()); 
+			
+			//出院其他诊断编码4
+			s.setOuthospitalotherdiagnosecodefour(element.element("outhospitalotherdiagnosecodefour").getText()); 
+			
+			//出院其他诊断名5
+			s.setOuthospitalotherdiagnosenamefive(element.element("outhospitalotherdiagnosenamefive").getText()); 
+			
+			//出院其他诊断编码5
+			s.setOuthospitalotherdiagnosecodefive(element.element("outhospitalotherdiagnosecodefive").getText()); 
+			
+			//自费金额 
+			s.setOwncost(element.element("owncost").getText()); 
+			
+			//医保金额
+			s.setHealthinsurancecost(element.element("healthinsurancecost").getText()); 
+			
+			//死亡状态
+			//s.setDiestatus(element.element("diestatus").getText()); 
+			
+			//管床护士（责任护士）名称
+			s.setNursename(element.element("nursename").getText()); 
+			
+			//管床护士id（责任护士）唯一标识
+			//s.setNurseno(element.element("nurseno").getText()); 
+			
 			//出院医嘱
 			if(element.element("outhospitaladvise")!=null){
 				s.setOuthospitaladvise(element.element("outhospitaladvise").getText());
 			}
+			
+			//住院状态
 			s.setInhospitalstatus(2);
+			
 			//院中管理状态(出院 自动设为2已完成)
 			s.setManagestate(2);
 		}else{
 			//院中管理状态(应设为 0未标记暂设为1未完成)
 			if(methodType==1){
-				s.setManagestate(1);
+				s.setManagestate(0);
 			}
 		}
-		if(element.element("patientid_his")!=null){
-			s.setPatientHisId(element.element("patientid_his").getText());
-		}
+		//一次住院记录唯一编码
+		s.setZy_code(element.element("zy_code").getText()); 
 	}
 	
 	/**
@@ -1187,7 +1332,7 @@ public class HisDateService {
 			//管床护士id（责任护士）唯一标识
 			//s.setNurseno(rs.getString("nurseno")); 
 			
-			//出院记录
+			//住院状态
 			s.setInhospitalstatus(2);
 			//管理状态已完成
 			s.setManagestate(2);
@@ -1312,4 +1457,16 @@ public class HisDateService {
 			return 0;
 		}
 	}
+	
+	private static boolean isValidDate(String str,String format) {
+        boolean convertSuccess = true;
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
+        try {
+        	dateFormat.setLenient(false);
+        	dateFormat.parse(str);
+        } catch (ParseException e) {
+            convertSuccess = false;
+        }
+        return convertSuccess;
+    }
 }
