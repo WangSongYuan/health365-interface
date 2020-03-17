@@ -119,7 +119,8 @@ public class YiZhouHisHandler extends HisDateService{
 				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		        String date = df.format(outSstartTime);
 		        //1对接视图TODO
-		        sql = "SELECT * FROM REPORT.dbo.JKGL_CZYJL WHERE inhospitalstatus = 2 AND outhospitaldate >= '"+date+" 00:00:00' AND outhospitaldate <= '"+date+" 23:59:59' ORDER BY outhospitaldate DESC";
+		        //sql = "SELECT * FROM REPORT.dbo.JKGL_CZYJL WHERE inhospitalstatus = 2 AND outhospitaldate >= '"+date+" 00:00:00' AND outhospitaldate <= '"+date+" 23:59:59' ORDER BY outhospitaldate DESC";
+		        sql="SELECT inhospitalstatus1, inhospitalstatus, departmentid, outhospitaldepartment, outhospitaldepartmentid, inhospitaldepartment, inhospitaldepartmentid, inhospitaldays, inhospitaldate, outhospitaldate, outhospitaldateclose, totalcost, maindoctorname, maindoctorid, doordoctorname, doordoctorid, costtype, inhospitalid, visitnum, inhospitalcount, outhospitaldiagnose, outhospitaldiagnoseicd, outhospitinfo, outhospitrecordid, drugallergy, allergydrug, rh, outhospitaltype, Pathologydiagnosename, pathologydiagnosecode, inhospitalway, inhospitaldiagnosis, inhospitaldiagnosiscode, outhospitalchinadoctordiagnosediseasname, outhospitalchinadoctordiagnosediseascode, outhospitalchinadoctordiagnosecardname, outhospitalchinadoctordiagnosecardcode, mainoperationname, mainoperationcode, otheroperationnameone, otheroperationcodeone, otheroperationnametwo, otheroperationcodetwo, otheroperationnamethree, otheroperationcodethree, otheroperationnamefour, otheroperationcodefour, outhospitalotherdiagnosenameone, outhospitalotherdiagnosecodeone, outhospitalotherdiagnosenametwo, outhospitalotherdiagnosecodetwo, outhospitalotherdiagnosenamethree, outhospitalotherdiagnosecodethree, outhospitalotherdiagnosenamefour, outhospitalotherdiagnosecodefour, outhospitalotherdiagnosenamefive, outhospitalotherdiagnosecodefive, bloodtype, owncost, healthinsurancecost, ageunit, age, nation, name, phone, phonetwo, companyphone, relativephone, birthday, sex, marry, profession, currentaddress, teladdress, company, relativename, relation, education, cardnum, inpatientarea, inpatientward, hospitalbed, outstatus, nursename, responsibleNurseId, outhospitaladvise, zy_code FROM REPORT.dbo.JKGL_CZYJL WHERE inhospitalstatus1 = 1 AND outhospitaldate >= '"+date+" 00:00:00' AND outhospitaldate <= '"+date+" 23:59:59' ORDER BY outhospitaldate DESC";
 		        pstmt = conn.prepareStatement(sql);
 		        rs = pstmt.executeQuery();
 		        while(rs.next()){
@@ -129,44 +130,44 @@ public class YiZhouHisHandler extends HisDateService{
 		        		para.put("zy_code", rs.getString("zy_code"));
 		        		//3插数据TODO
         	    		startGrabDataByResultSet(rs, para, 1,2,false);
-        	    		SInhospitalEntity s = inhospitalMapper.getInhospital(para);
-        	    		if(s!=null&&ValidateUtil.isNotNull(s.getOuthospitrecordid())){
-        	    			//电子病历(出院记录)格式化
-        	    			para = new HashMap<>();
-        	    			para.put("outhospitrecordid",s.getOuthospitrecordid());
-        	    			SelctronicMedicalRecordEntity emr = elctronicMedicalRecordMapper.getEMR(para);
-        	    			String dzblSQL = "SELECT * FROM REPORT.dbo.JKGL_DZBL where outhospitrecordid = ?";
-        	    			PreparedStatement dzbl = conn.prepareStatement(dzblSQL);
-        	    			dzbl.setString(1, rs.getString("outhospitrecordid"));
-        	    			ResultSet dzblrs=dzbl.executeQuery();
-        	    			if(dzblrs.next()){
-        	    				String content = dzblrs.getString("leavehospitalcontent");
-        	    				if(ValidateUtil.isNotNull(content)){
-        	    					SAXReader reader = new SAXReader();
-        	    					Document document = null;
-        	    					try {
-        	    						document = reader.read(new StringReader(content), "ANSI");
-        	    						List<?> list = document.getRootElement().elements("text");
-        	    						for (Object element : list) {
-        	    							Element e = (Element)element;
-        	    							content = e.getText();
-        	    							break;
-        	    						}
-        	    						if(emr==null){
-        	    							emr = new SelctronicMedicalRecordEntity();
-        	    							emr.setOuthospitrecordid(dzblrs.getString("outhospitrecordid"));
-        	    							emr.setContent(content);
-        	    							elctronicMedicalRecordMapper.setEMR(emr);
-        	    						}else{
-        	    							emr.setContent(content);
-        	    							elctronicMedicalRecordMapper.updateEMR(emr);
-        	    						}
-        	    					} catch (Exception e) {
-        	    						e.printStackTrace();
-        	    					}
-        	    				}
-        	    			}
-        	    		}
+//        	    		SInhospitalEntity s = inhospitalMapper.getInhospital(para);
+//        	    		if(s!=null&&ValidateUtil.isNotNull(s.getOuthospitrecordid())){
+//        	    			//电子病历(出院记录)格式化
+//        	    			para = new HashMap<>();
+//        	    			para.put("outhospitrecordid",s.getOuthospitrecordid());
+//        	    			SelctronicMedicalRecordEntity emr = elctronicMedicalRecordMapper.getEMR(para);
+//        	    			String dzblSQL = "SELECT * FROM REPORT.dbo.JKGL_DZBL where outhospitrecordid = ?";
+//        	    			PreparedStatement dzbl = conn.prepareStatement(dzblSQL);
+//        	    			dzbl.setString(1, rs.getString("outhospitrecordid"));
+//        	    			ResultSet dzblrs=dzbl.executeQuery();
+//        	    			if(dzblrs.next()){
+//        	    				String content = dzblrs.getString("leavehospitalcontent");
+//        	    				if(ValidateUtil.isNotNull(content)){
+//        	    					SAXReader reader = new SAXReader();
+//        	    					Document document = null;
+//        	    					try {
+//        	    						document = reader.read(new StringReader(content), "ANSI");
+//        	    						List<?> list = document.getRootElement().elements("text");
+//        	    						for (Object element : list) {
+//        	    							Element e = (Element)element;
+//        	    							content = e.getText();
+//        	    							break;
+//        	    						}
+//        	    						if(emr==null){
+//        	    							emr = new SelctronicMedicalRecordEntity();
+//        	    							emr.setOuthospitrecordid(dzblrs.getString("outhospitrecordid"));
+//        	    							emr.setContent(content);
+//        	    							elctronicMedicalRecordMapper.setEMR(emr);
+//        	    						}else{
+//        	    							emr.setContent(content);
+//        	    							elctronicMedicalRecordMapper.updateEMR(emr);
+//        	    						}
+//        	    					} catch (Exception e) {
+//        	    						e.printStackTrace();
+//        	    					}
+//        	    				}
+//        	    			}
+//        	    		}
 		        	}
 		        }
 	        }
@@ -267,7 +268,10 @@ public class YiZhouHisHandler extends HisDateService{
 					userRole.setsRoleEntity(nurseRole);
 					userRoleMapper.setUserRole(userRole);
 					// 插入用户机构科室关联表
-					SDepartmentEntity inhospitalDepartment = departmentMapper.getDepartmentByHisId(ksId);
+					Map<String,Object> params = new HashMap<String, Object>();
+					params.put("thirdpartyhisid", ksId);
+					params.put("orgId", org.getId());
+					SDepartmentEntity inhospitalDepartment = departmentMapper.getDepartment(params);
 					para = new HashMap<>();
 					para.put("userid", user.getId());
 					para.put("departmentid", inhospitalDepartment.getId());

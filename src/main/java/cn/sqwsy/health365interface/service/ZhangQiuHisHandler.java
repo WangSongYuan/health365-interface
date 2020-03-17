@@ -264,7 +264,10 @@ public class ZhangQiuHisHandler extends HisDateService{
 						userRole.setsRoleEntity(nurseRole);
 						userRoleMapper.setUserRole(userRole);
 						//插入护士用户机构科室关联表
-						SDepartmentEntity inhospitalDepartment = departmentMapper.getDepartmentByHisId(nurse.getDepartentId());
+						Map<String,Object> params = new HashMap<String, Object>();
+						params.put("thirdpartyhisid", nurse.getDepartentId());
+						params.put("orgId", 1);
+						SDepartmentEntity inhospitalDepartment = departmentMapper.getDepartment(params);
 						Map<String,Object> userOrgPara = new HashMap<>();
 						userOrgPara.put("userid", user.getId());
 						userOrgPara.put("departmentid", nurse.getDepartentId());

@@ -99,7 +99,7 @@ public class HisDateService {
 	Integer patientAge = null;
 	String cardNum = null;
 	
-	public void startGrabDataByElement(Element element,Map<String,Object> para,Integer orgId,Integer status) throws SQLException{
+	public void startGrabDataByElement(Element element,Map<String,Object> para,Integer orgId,Integer status,boolean referral) throws SQLException{
 		//机构
 		Map<String,Object> orgPara = new HashMap<>();
 		orgPara.put("id", orgId);
@@ -112,13 +112,13 @@ public class HisDateService {
 			//入院科室表
 			inHospitalDepartment = setDepartment(element.element("inhospitaldepartmentid").getText(),element.element("inhospitaldepartment").getText(),orgId,null);
 			//无需管理
-			if(inHospitalDepartment.getState()==2){
+			if(inHospitalDepartment.getState()==2&&!referral){
 				return;
 			}
 		}else if(status==2){
 			//出院科室表
 			outHospitalDepartment = setDepartment(element.element("outhospitaldepartmentid").getText(),element.element("outhospitaldepartment").getText(),orgId,null);
-			if(outHospitalDepartment.getState()==2){
+			if(outHospitalDepartment.getState()==2&&!referral){
 				return;
 			}
 			//入院科室表
@@ -176,6 +176,10 @@ public class HisDateService {
     		if(s.getIsValid()==1){
     			SPatientEntity patient = setPatientByElement(element, orgId);
     			s.setsPatientEntity(patient);
+    		}
+    		//转诊设置管理状态为未分配
+    		if(referral){    			
+    			s.setManagestate(0);
     		}
     		if(status==1){
     			/**
@@ -572,7 +576,10 @@ public class HisDateService {
 	public SDepartmentEntity setDepartment(String departmentId,String departmentName,Integer orgId,List<String> departmentDefaultStateList) throws SQLException{
 		SDepartmentEntity department =null;
 		if(ValidateUtil.isNotNull(departmentId)&&ValidateUtil.isNotNull(departmentName)){
-			department = departmentMapper.getDepartmentByHisId(departmentId);
+			Map<String,Object> params = new HashMap<String, Object>();
+			params.put("thirdpartyhisid", departmentId);
+			params.put("orgId", orgId);
+			department = departmentMapper.getDepartment(params);
 			if(department==null){
 				department = new SDepartmentEntity();
 				setDepartmentData(departmentId,departmentName,orgId,department,departmentDefaultStateList);
@@ -741,7 +748,7 @@ public class HisDateService {
 		patientPara.put("orgId", orgId);
 		patientPara.put("cardnum",cardNum);
 		
-		SPatientEntity patient = patientMapper.getPatinet(patientPara);
+		SPatientEntity patient = patientMapper.getPatient(patientPara);
 		
 		if(patient==null){			
 			patient = new SPatientEntity();
@@ -774,7 +781,7 @@ public class HisDateService {
 		Map<String,Object> patientPara = new HashMap<>();
 		patientPara.put("orgId", orgId);
 		patientPara.put("cardnum",cardnum);
-		SPatientEntity patient = patientMapper.getPatinet(patientPara);
+		SPatientEntity patient = patientMapper.getPatient(patientPara);
 		if(patient==null){			
 			patient = new SPatientEntity();
 			setPatientDataByElement(element, orgId, cardnum, patient);
@@ -1344,6 +1351,26 @@ public class HisDateService {
 				s.setManagestate(0);
 			}
 		}
+		/**
+		 * V2.1新增单病种管理start
+		 */
+		//管理类型  1.正常排期管理2.感染病管理3.未知（例：慢性病管理  例：风险性管理等）
+		if(true){
+			s.setManagertype(1);
+		}
+		
+		//病种表ID
+		if(true){
+			s.setChronicDiseaseId(null);
+		}
+		
+		//确诊情况 1.未确诊2.疑似3.确诊
+		if(true){
+			s.setConfiredCases(3);
+		}
+		/**
+		 * V2.1新增单病种管理end
+		 */
 		//一次住院记录唯一编码
 		s.setZy_code(rs.getString("zy_code")); 
 		//章丘HIS患者ID

@@ -175,7 +175,7 @@ public class BinYangHisHandler extends HisDateService{
 			if (ValidateUtil.isNotNull(element.element("zy_code").getText())) {
 				para.put("zy_code", element.element("zy_code").getText());
 				try {
-					startGrabDataByElement(element, para, 1, status);
+					startGrabDataByElement(element, para, 1, status,false);
 					SInhospitalEntity s = inhospitalMapper.getInhospital(para);
 					if(s!=null&&status==1){
 						//入院情况
@@ -324,7 +324,10 @@ public class BinYangHisHandler extends HisDateService{
 						userRole.setsRoleEntity(nurseRole);
 						userRoleMapper.setUserRole(userRole);
 						// 插入用户机构科室关联表
-						SDepartmentEntity inhospitalDepartment = departmentMapper.getDepartmentByHisId(ksId);
+						Map<String,Object> params = new HashMap<String, Object>();
+						params.put("thirdpartyhisid", ksId);
+						params.put("orgId", org.getId());
+						SDepartmentEntity inhospitalDepartment = departmentMapper.getDepartment(params);
 						para = new HashMap<>();
 						para.put("userid", user.getId());
 						para.put("departmentid", inhospitalDepartment.getId());

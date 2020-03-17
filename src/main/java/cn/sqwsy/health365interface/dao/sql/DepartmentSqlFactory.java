@@ -63,10 +63,13 @@ public class DepartmentSqlFactory {
         sql.SELECT("*");
         sql.FROM("s_department");
         if(ValidateUtil.isNotNull(para.get("orgId").toString())){
-        	sql.WHERE("orgId="+para.get("orgId"));
+        	sql.WHERE("orgId='"+para.get("orgId")+"'");
+        }
+        if(para.get("type")!=null){
+        	sql.WHERE("type='"+para.get("type")+"'");
         }
         if(para.get("state")!=null){
-        	sql.WHERE("state="+para.get("state"));
+        	sql.WHERE("state='"+para.get("state")+"'");
         }
         return sql.toString();
 	}

@@ -8,7 +8,7 @@ import cn.sqwsy.health365interface.dao.entity.SPatientEntity;
 import cn.sqwsy.health365interface.service.utils.ValidateUtil;
 
 public class PatientSqlFactory {
-	public String getPatinet(Map<String, Object> para){
+	public String getPatient(Map<String, Object> para){
         SQL sql = new SQL();
         sql.SELECT("*");
         sql.FROM("s_patient");

@@ -123,6 +123,10 @@ public class SInhospitalEntity extends PO {
 	private String pathologydiagnosename;//病理诊断名称
 	private String pathologydiagnosecode;//病理诊断码
 	private Integer userinfoid;//操作用户ID(本条数据操作人)
+	//<------------------20200208---------------->
+	private Integer managertype=1;//管理类型  1.正常排期管理2.感染病管理3.未知（例：慢性病管理  例：风险性管理等）
+	private Integer chronicDiseaseId;//病种表ID
+	private Integer confiredCases;//确诊情况 1.未确诊2.疑似3.确诊
 	//<---------------------------------->
 	//展示字段
 	//<---------------------------------->
@@ -918,5 +922,29 @@ public class SInhospitalEntity extends PO {
 
 	public void setZy_code(String zy_code) {
 		this.zy_code = zy_code;
+	}
+
+	public Integer getManagertype() {
+		return managertype;
+	}
+
+	public void setManagertype(Integer managertype) {
+		this.managertype = managertype;
+	}
+
+	public Integer getChronicDiseaseId() {
+		return chronicDiseaseId;
+	}
+
+	public void setChronicDiseaseId(Integer chronicDiseaseId) {
+		this.chronicDiseaseId = chronicDiseaseId;
+	}
+
+	public Integer getConfiredCases() {
+		return confiredCases;
+	}
+
+	public void setConfiredCases(Integer confiredCases) {
+		this.confiredCases = confiredCases;
 	}
 }

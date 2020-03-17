@@ -16,8 +16,8 @@ public interface DepartmentMapper {
 	@Select("SELECT * FROM s_department WHERE id = #{id}")
 	SDepartmentEntity getDepartmentById(int id);
 
-	@Select("SELECT * FROM s_department WHERE thirdpartyhisid = #{thirdpartyhisid}")
-	SDepartmentEntity getDepartmentByHisId(String thirdpartyhisid);
+	@Select("SELECT * FROM s_department WHERE thirdpartyhisid = #{thirdpartyhisid} and orgId =#{orgId}")
+	SDepartmentEntity getDepartment(Map<String,Object> para);
 
 	@InsertProvider(type = DepartmentSqlFactory.class, method = "setDepartment")
     @Options(useGeneratedKeys = true, keyProperty = "id")

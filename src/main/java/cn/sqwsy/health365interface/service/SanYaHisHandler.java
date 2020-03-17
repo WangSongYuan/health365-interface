@@ -1,5 +1,11 @@
 package cn.sqwsy.health365interface.service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -13,6 +19,13 @@ import java.util.Map;
 
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.jaxws.endpoint.dynamic.JaxWsDynamicClientFactory;
+import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.CellType;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -29,27 +42,33 @@ import cn.sqwsy.health365interface.dao.entity.SUserroleEntity;
 import cn.sqwsy.health365interface.service.utils.ValidateUtil;
 
 @Component
+@SuppressWarnings("unchecked")
 public class SanYaHisHandler extends HisDateService {
+	
 
-	//@Scheduled(fixedDelay = 3000)
+	//@Scheduled(fixedDelay = 1800000)
 	public void fixedRateJob() {
 		try {
-			setKs();
-			setJbgls();
-			setdefaultAdmin();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			String startHisTime = sdf.format(new Date());
+			System.out.println("开始"+startHisTime);
+			//setKs();
+			//setJbgls();
+			//setdefaultAdmin();
 			Map<String, Object> departmentPara = new HashMap<>();
 			departmentPara.put("orgId", 1);
 			departmentPara.put("state", 1);
 			List<SDepartmentEntity> departments = departmentMapper.getDepartmentsList(departmentPara);
+			
 			//住院记录
 			for(SDepartmentEntity department:departments){
 				StringBuffer sb = new StringBuffer();
-				sb.append("^^1^").append(department.getThirdpartyhisid());
-				callinginterface(sb, 1);
+				sb.append("^^1^").append(department.getThirdpartyhisid()).append("^");
+				toXml(callinginterface(sb),1);
 			}
 			
 			//出院记录
-			for(int i=1;i<=7;i++){
+			for(int i=0;i<3;i++){
 				Calendar outStartCal = Calendar.getInstance();
 				outStartCal.add(Calendar.DAY_OF_MONTH, -i);
 				outStartCal.set(Calendar.HOUR_OF_DAY, 0);
@@ -68,29 +87,83 @@ public class SanYaHisHandler extends HisDateService {
 				String endTime = df.format(outEndTime);
 				for (SDepartmentEntity department : departments) {
 					StringBuffer sb = new StringBuffer();
-					sb.setLength(0);
-					sb.append(startTime + "^" + endTime + "^2^").append(department.getThirdpartyhisid());
-					callinginterface(sb, 2);
+					sb.append(startTime + "^" + endTime + "^2^").append(department.getThirdpartyhisid()+"^");
+					toXml(callinginterface(sb),2);
 				}
 			}
-		} catch (SQLException e) {
+			
+			//转科室处理
+//			List<Map<String, String>> list = inhospitalMapper.getInhospitalAndDepartmentId();
+//			Object[] objects = new Object[0];
+//	        for(Map<String, String> s:list){
+//	        	String sb = "^^1^^"+s.get("visitnum");
+//    			objects = client.invoke("SendMessageInfo","MES0014",sb);
+//    			SAXReader reader = new SAXReader();
+//    			Document document = null;
+//				document = reader.read(new StringReader(objects[0].toString()), "ANSI");
+//    			Element root = document.getRootElement();
+//    			if(root.element("ResultCode").getText().equals("0")){
+//    				Iterator<Element> it = root.elementIterator("IpOutInfos");
+//    				if(it.hasNext()) {
+//    					Element element = it.next();
+//    					//判断入院科室是否一致
+//    					if(!element.element("inhospitaldepartmentid").getText().equals(s.get("THIRDPARTYHISID"))){
+//    						Map<String,Object> para = new HashMap<>();
+//    						//2三亚数据唯一标识TODO
+//    						para.put("visitnum", element.element("visitnum").getText());
+//    						//3插数据TODO
+//    						startGrabDataByElement(element, para, 1,1,true);
+//    					}
+//    				}
+//    			}
+//	        }
+	        String endHisTime = sdf.format(new Date());
+			System.out.println("结束"+endHisTime);
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		} 
 	}
 
-	private void callinginterface(StringBuffer sb, Integer status) {
+	private Object callinginterface(StringBuffer sb) {
 		JaxWsDynamicClientFactory dcf = JaxWsDynamicClientFactory.newInstance();
-		Client client = dcf.createClient("http://172.16.200.140/csp/i-empi/DHC.HealthManager.BS.HealthMangerInfoService.CLS?WSDL=1");
-		Object[] objects = new Object[0];
+		Client client = dcf.createClient("http://172.16.200.48/csp/hsb/DHC.Published.PUB0003.BS.PUB0003.CLS?WSDL=1");
+		HTTPConduit conduit = (HTTPConduit) client.getConduit();
+		HTTPClientPolicy policy = new HTTPClientPolicy();
+		long timeout = 10 * 60 * 1000;
+		policy.setConnectionTimeout(timeout);
+		policy.setReceiveTimeout(timeout);
+		conduit.setClient(policy);
+		Object[] objects = new Object[0];;
 		try {
-			objects = client.invoke("GetMessageInfo", "GetIPOutInfo", sb.toString());
-			toXml(objects[0], status);
+			objects = client.invoke("SendMessageInfo", "MES0014", sb.toString());
+			client.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		try{
+			//接口日志start
+			OutputStreamWriter   pw = null;
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");//设置日期格式
+			SimpleDateFormat df2 = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");//设置日期格式
+			String date = df.format(new Date());// new Date()为获取当前系统时间
+			String time = df2.format(new Date());
+			String fileName = "D:/Dao/logs/"+date +"/"+time+"_"+sb.toString()+".xml";
+			File file = new File(fileName);  
+			File fileParent = file.getParentFile();  
+			if(!fileParent.exists()){  
+			    fileParent.mkdirs();  
+			}  
+			pw = new OutputStreamWriter(
+					new FileOutputStream(fileName), "UTF-8");
+			pw.write(objects[0].toString());
+			pw.close();//关闭流
+			//接口日志end
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return objects[0];
 	}
 
-	@SuppressWarnings("unchecked")
 	private void toXml(Object object, Integer status) throws DocumentException, SQLException {
 		SAXReader reader = new SAXReader();
 		Document document = null;
@@ -108,7 +181,7 @@ public class SanYaHisHandler extends HisDateService {
 				// 三亚数据唯一标识
 				if (ValidateUtil.isNotNull(element.element("visitnum").getText())) {
 					para.put("visitnum", element.element("visitnum").getText());
-					startGrabDataByElement(element, para, 1, status);
+					startGrabDataByElement(element, para, 1, status,false);
 				}
 			}
 		}else{
@@ -149,12 +222,47 @@ public class SanYaHisHandler extends HisDateService {
 			setUserOrg(user, org, department,2);
 		}
 	}
+	
+	/*private void setKsByExcel() {
+		//默认管理科室第三方科室ID
+		List<String> departmentDefaultStateList = new ArrayList<>();
+		departmentDefaultStateList.add("94");
+		departmentDefaultStateList.add("114");
+		departmentDefaultStateList.add("49");
+		departmentDefaultStateList.add("185");
+		departmentDefaultStateList.add("139");
+		departmentDefaultStateList.add("147");
+		departmentDefaultStateList.add("363");
+		departmentDefaultStateList.add("364");
+		departmentDefaultStateList.add("365");
+		String fileToBeRead = "D:\\sy.xls";
+		try {
+			InputStream inp = new FileInputStream(new File(fileToBeRead));
+			HSSFWorkbook workbook = new HSSFWorkbook(inp);
+			HSSFSheet sheet = workbook.getSheetAt(0);
+			int rowNumber = sheet.getPhysicalNumberOfRows();
+			for(int rowIndex = 0; rowIndex < rowNumber; rowIndex++){
+				HSSFRow row = sheet.getRow(rowIndex);
+				HSSFCell cell = row.getCell(0);
+				cell.setCellType(CellType.STRING);
+				String id = cell.getStringCellValue();
+				cell = row.getCell(1);
+				String name = cell.getStringCellValue();
+				setDepartment(id, name, 1,departmentDefaultStateList);
+			}
+			workbook.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}		
+	}*/
 
 	public void setKs() {
 		Map<Object, String> map = new HashMap<>();
 		map.put(5, "病理科");
 		map.put(16, "儿科");
-		map.put(19, "放疗科");
+		map.put(19, "耳鼻喉科");
 		map.put(26, "放射科");
 		map.put(27, "妇产科");
 		map.put(32, "感染科");
@@ -167,7 +275,7 @@ public class SanYaHisHandler extends HisDateService {
 		map.put(67, "介入科");
 		map.put(69, "康复医学科");
 		map.put(73, "口腔颌面外科");
-		map.put(77, "老年医学中医科");
+		map.put(77, "老年医学科");
 		map.put(84, "麻醉手术科");
 		map.put(89, "泌尿外科");
 		map.put(94, "内分泌科");
@@ -191,7 +299,11 @@ public class SanYaHisHandler extends HisDateService {
 		map.put(174, "营养科");
 		map.put(306, "疼痛脊柱微创中心");
 		map.put(307, "医疗保健科");
+		map.put(331, "全科医学科");
 		map.put(338, "急诊重症监护室");
+		map.put(363, "肿瘤治疗中心");
+		map.put(364, "肿瘤治疗中心一");
+		map.put(365, "肿瘤治疗中心二");
 		
 		//默认管理科室第三方科室ID
 		List<String> departmentDefaultStateList = new ArrayList<>();
@@ -201,6 +313,9 @@ public class SanYaHisHandler extends HisDateService {
 		departmentDefaultStateList.add("185");
 		departmentDefaultStateList.add("139");
 		departmentDefaultStateList.add("147");
+		departmentDefaultStateList.add("363");
+		departmentDefaultStateList.add("364");
+		departmentDefaultStateList.add("365");
 		
 		for (Object key : map.keySet()) {
 			try {
@@ -253,7 +368,10 @@ public class SanYaHisHandler extends HisDateService {
 					userRole.setsRoleEntity(nurseRole);
 					userRoleMapper.setUserRole(userRole);
 					// 插入护士用户机构科室关联表
-					SDepartmentEntity inhospitalDepartment = departmentMapper.getDepartmentByHisId(ksId);
+					Map<String,Object> params = new HashMap<String, Object>();
+					params.put("thirdpartyhisid", ksId);
+					params.put("orgId", 1);
+					SDepartmentEntity inhospitalDepartment = departmentMapper.getDepartment(params);
 					Map<String, Object> userOrgPara = new HashMap<>();
 					userOrgPara.put("userid", user.getId());
 					userOrgPara.put("departmentid", ksId);

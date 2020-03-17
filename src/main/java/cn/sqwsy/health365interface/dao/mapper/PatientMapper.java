@@ -15,8 +15,8 @@ import cn.sqwsy.health365interface.dao.sql.PatientSqlFactory;
 
 
 public interface PatientMapper {
-	@SelectProvider(type=PatientSqlFactory.class,method="getPatinet")
-	SPatientEntity getPatinet(Map<String, Object> para);
+	@SelectProvider(type=PatientSqlFactory.class,method="getPatient")
+	SPatientEntity getPatient(Map<String, Object> para);
 	
 	@InsertProvider(type = PatientSqlFactory.class, method = "setPatient")
     @Options(useGeneratedKeys = true, keyProperty = "id")

@@ -1,5 +1,6 @@
 package cn.sqwsy.health365interface.service.utils;
 
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -51,5 +52,15 @@ public class DateUtil {
 			date = null;
 		}
 		return date;
+	}
+	
+	/**
+	 * 获得SQL时间戳
+	 * @param date
+	 * @return
+	 */
+	public static Timestamp getSqlTimestamp(Date date) {
+		if(date==null)return null;
+		return new java.sql.Timestamp(date.getTime());
 	}
  }

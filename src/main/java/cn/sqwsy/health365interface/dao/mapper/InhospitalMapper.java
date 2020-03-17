@@ -29,7 +29,7 @@ public interface InhospitalMapper {
 	@UpdateProvider(type=InhospitalSqlFactory.class,method="updateInhospital")
 	void updateInhospital(SInhospitalEntity inhospitalEntity);
 	
-	@Select("SELECT s.zy_code,s.patientHisId, s.INHOSPITALCOUNT, d.THIRDPARTYHISID FROM s_inhospital s, s_department d WHERE s.INHOSPITALDEPARTMENTID = d.id AND s.inhospitalstatus = 1")
+	@Select("SELECT s.visitnum,s.zy_code,s.patientHisId, s.INHOSPITALCOUNT, d.THIRDPARTYHISID FROM s_inhospital s, s_department d WHERE s.INHOSPITALDEPARTMENTID = d.id AND s.inhospitalstatus = 1")
 	List<Map<String,String>> getInhospitalAndDepartmentId();
 	
     @Results(id="inhospitalMap", value={

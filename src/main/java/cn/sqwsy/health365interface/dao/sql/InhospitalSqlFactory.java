@@ -452,6 +452,27 @@ public class InhospitalSqlFactory {
 	    		sql.VALUES("nurseno", "#{nurseno}");
 	    	}
 	    	
+	    	/**
+			 * V2.1新增单病种管理start
+			 */
+			//管理类型  1.正常排期管理2.感染病管理3.未知（例：慢性病管理  例：风险性管理等）
+	    	if(inhospital.getManagertype()!=null){
+	    		sql.VALUES("managertype", "#{managertype}");
+			}
+			
+			//病种表ID
+			if(inhospital.getChronicDiseaseId()!=null){
+				sql.VALUES("chronicDiseaseId", "#{chronicDiseaseId}");
+			}
+			
+			//确诊情况 1.未确诊2.疑似3.确诊
+			if(inhospital.getConfiredCases()!=null){
+				sql.VALUES("confiredCases", "#{confiredCases}");
+			}
+			/**
+			 * V2.1新增单病种管理end
+			 */
+	    	
 	    	//一次住院记录唯一编码
 	    	if(ValidateUtil.isNotNull(inhospital.getZy_code())){
 	    		sql.VALUES("zy_code", "#{zy_code}");
